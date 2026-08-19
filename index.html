@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Скальпинг Терминал — Gold & Silver</title>
+<title>Скальпинг Терминал Pro — Gold & Silver</title>
 <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -25,11 +25,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
 .btn.silver-active{background:#94a3b8;color:#0f172a}
 .btn-refresh{background:#10b981;color:#fff}
 .btn-journal{background:#8b5cf6;color:#fff}
-.btn-auto{background:#059669;color:#fff}
+.btn-risk{background:#f59e0b;color:#0f172a}
+.btn-quick-long{background:#10b981;color:#fff;font-size:13px;padding:8px 16px}
+.btn-quick-short{background:#ef4444;color:#fff;font-size:13px;padding:8px 16px}
 .main{display:grid;grid-template-columns:1fr 360px;gap:16px;padding:16px 24px;max-width:1550px;margin:0 auto}
 @media(max-width:1100px){.main{grid-template-columns:1fr}}
 .chart-wrap{background:#111827;border-radius:12px;border:1px solid #1e293b;overflow:hidden}
-.chart-header{padding:12px 16px;background:#1e293b;display:flex;justify-content:space-between;align-items:center}
+.chart-header{padding:12px 16px;background:#1e293b;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
 .price{font-size:24px;font-weight:700}
 .price.up{color:#10b981}
 .price.down{color:#ef4444}
@@ -86,6 +88,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
 .demo-banner{background:#7c3aed;color:#fff;padding:10px 16px;text-align:center;font-size:13px;border-bottom:1px solid #1e293b;display:none}
 .auto-banner{background:#064e3b;color:#a7f3d0;padding:10px 16px;text-align:center;font-size:13px;border-bottom:1px solid #1e293b;display:none}
 .auto-banner a{color:#34d399;text-decoration:underline;cursor:pointer;font-weight:700}
+.alert-flash{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(16,185,129,0.15);pointer-events:none;z-index:2000;opacity:0;transition:opacity .3s}
+.alert-flash.show{opacity:1}
+.alert-flash.sell{background:rgba(239,68,68,0.15)}
+.session-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;margin-left:8px}
+.session-asia{background:#f59e0b;color:#0f172a}
+.session-europe{background:#3b82f6;color:#fff}
+.session-america{background:#ef4444;color:#fff}
+.session-none{background:#475569;color:#cbd5e1}
 .journal-form{display:grid;gap:10px;margin-bottom:16px}
 .jf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .jf-input,.jf-select{width:100%;padding:8px 12px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px}
@@ -96,6 +106,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
 .jf-btn.secondary{background:#3b82f6}
 .jf-btn.danger{background:#ef4444}
 .jf-btn.auto{background:#059669}
+.jf-btn.warning{background:#f59e0b;color:#0f172a}
 .trade-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
 .trade-table th{text-align:left;padding:6px 4px;background:#1e293b;color:#94a3b8;font-weight:600;border-bottom:1px solid #334155;font-size:10px}
 .trade-table td{padding:6px 4px;border-bottom:1px solid #1e293b;vertical-align:top}
@@ -120,7 +131,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
 .empty-state{text-align:center;padding:20px;color:#64748b;font-size:13px}
 .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.show{display:flex}
-.modal{background:#111827;border:1px solid #334155;border-radius:16px;padding:24px;width:100%;max-width:440px}
+.modal{background:#111827;border:1px solid #334155;border-radius:16px;padding:24px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
 .modal h3{margin:0 0 16px;font-size:18px}
 .modal-close{float:right;background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer}
 .modal-close:hover{color:#fff}
@@ -128,29 +139,44 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
 .hint{font-size:11px;color:#64748b;margin-top:4px}
 .auto-trade-hint{background:#064e3b;border:1px solid #10b981;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:#a7f3d0}
 .auto-trade-hint b{color:#34d399}
+.risk-result{background:#1e293b;border-radius:8px;padding:12px;margin-top:12px;font-size:13px}
+.risk-result .rrow{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #334155}
+.risk-result .rrow:last-child{border:none}
+.risk-result .rval{font-weight:700;color:#34d399}
+.checkbox-row{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:#cbd5e1}
+.checkbox-row input{width:16px;height:16px;accent-color:#3b82f6}
 </style>
+<base target="_blank">
 <base target="_blank">
 </head>
 <body>
 
+<div class="alert-flash" id="alertFlash"></div>
+
 <div class="header">
-  <h1>🎯 Скальпинг Терминал</h1>
-  <div class="status" id="status"><span class="spinner"></span> Загрузка...</div>
+  <h1>🎯 Скальпинг Терминал <span style="color:#f59e0b">Pro</span></h1>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div class="status" id="status"><span class="spinner"></span> Загрузка...</div>
+    <div id="sessionBadge" class="session-badge session-none">—</div>
+    <div style="font-size:12px;color:#64748b" id="countdown">Обновление через 60с</div>
+  </div>
 </div>
 
 <div class="toolbar">
   <button class="btn active gold-active" id="btn-gold" onclick="setAsset('gold')">🥇 Золото</button>
   <button class="btn" id="btn-silver" onclick="setAsset('silver')">🥈 Серебро</button>
   <div style="width:1px;height:26px;background:#334155;margin:0 6px"></div>
+  <button class="btn" id="btn-1m" onclick="setTF('1m')">1м</button>
+  <button class="btn" id="btn-5m" onclick="setTF('5m')">5м</button>
+  <button class="btn" id="btn-15m" onclick="setTF('15m')">15м</button>
+  <button class="btn" id="btn-30m" onclick="setTF('30m')">30м</button>
   <button class="btn active" id="btn-1h" onclick="setTF('1h')">1ч</button>
   <button class="btn" id="btn-4h" onclick="setTF('4h')">4ч</button>
   <button class="btn" id="btn-1d" onclick="setTF('1d')">1д</button>
   <button class="btn" id="btn-1w" onclick="setTF('1w')">1н</button>
   <button class="btn" id="btn-1M" onclick="setTF('1M')">1мес</button>
-  <button class="btn" id="btn-3M" onclick="setTF('3M')">3мес</button>
-  <button class="btn" id="btn-1Y" onclick="setTF('1Y')">1год</button>
-  <button class="btn" id="btn-ALL" onclick="setTF('ALL')">Всё</button>
   <div style="flex:1"></div>
+  <button class="btn btn-risk" onclick="openRiskModal()">🧮 Риск</button>
   <button class="btn btn-journal" onclick="openTradeModal()">➕ Сделка</button>
   <button class="btn btn-refresh" onclick="loadData()">🔄</button>
 </div>
@@ -166,9 +192,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
           <div class="price" id="currentPrice">--</div>
           <div style="font-size:12px;color:#64748b;margin-top:2px" id="priceInfo">--</div>
         </div>
-        <div style="text-align:right">
-          <div class="change" id="priceChange">--</div>
-          <div style="font-size:11px;color:#64748b;margin-top:4px" id="priceRange">--</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-quick-long" onclick="quickTrade('LONG')">⚡ LONG</button>
+          <button class="btn btn-quick-short" onclick="quickTrade('SHORT')">⚡ SHORT</button>
+          <div style="text-align:right">
+            <div class="change" id="priceChange">--</div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px" id="priceRange">--</div>
+          </div>
         </div>
       </div>
       <div id="mainChart"></div>
@@ -176,6 +206,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
         <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>EMA 9</div>
         <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>EMA 21</div>
         <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>EMA 50</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>VWAP</div>
         <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>BB Upper</div>
         <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>BB Lower</div>
         <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div>LONG</div>
@@ -210,8 +241,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
         <div class="metric-row"><span class="metric-label">MACD</span><span class="metric-value" id="sideMacd">--</span></div>
         <div class="metric-row"><span class="metric-label">ATR</span><span class="metric-value" id="sideAtr">--</span></div>
         <div class="metric-row"><span class="metric-label">BB Pos</span><span class="metric-value" id="sideBB">--</span></div>
+        <div class="metric-row"><span class="metric-label">VWAP Pos</span><span class="metric-value" id="sideVwap">--</span></div>
+        <div class="metric-row"><span class="metric-label">Volume ↑</span><span class="metric-value" id="sideVol">--</span></div>
         <div class="metric-row"><span class="metric-label">Score</span><span class="metric-value" id="sideScore">--</span></div>
       </div>
+
+      <div class="panel">
+        <div class="panel-title">Мульти-ТФ Сигнал</div>
+        <div class="metric-row"><span class="metric-label">Старший ТФ</span><span class="metric-value" id="mtfTf">--</span></div>
+        <div class="metric-row"><span class="metric-label">Сигнал</span><span class="metric-value" id="mtfSignal">--</span></div>
+        <div class="metric-row"><span class="metric-label">Согласованность</span><span class="metric-value" id="mtfAlign">--</span></div>
+        <div class="hint" style="margin-top:6px">Торгуйте только когда сигналы совпадают</div>
+      </div>
+
       <div class="panel">
         <div class="panel-title">Уровни LONG</div>
         <div class="level-grid">
@@ -230,6 +272,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
         <div class="panel-title">Ключевые уровни</div>
         <div class="metric-row"><span class="metric-label">Сопротивление</span><span class="metric-value" style="color:#f59e0b" id="resLevel">--</span></div>
         <div class="metric-row"><span class="metric-label">Поддержка</span><span class="metric-value" style="color:#3b82f6" id="supLevel">--</span></div>
+        <div class="metric-row"><span class="metric-label">VWAP</span><span class="metric-value" style="color:#06b6d4" id="vwapLevel">--</span></div>
       </div>
       <div class="panel">
         <div class="panel-title">Рекомендация</div>
@@ -257,6 +300,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
           <div class="stat-card"><div class="label">Win Rate</div><div class="value" id="statWinRate">0%</div></div>
           <div class="stat-card"><div class="label">Общий P&L</div><div class="value" id="statTotalPnl">0%</div></div>
           <div class="stat-card"><div class="label">Средний</div><div class="value" id="statAvgPnl">0%</div></div>
+          <div class="stat-card"><div class="label">Max DD</div><div class="value" id="statMaxDD">0%</div></div>
+          <div class="stat-card"><div class="label">Profit Factor</div><div class="value" id="statPF">0</div></div>
+          <div class="stat-card"><div class="label">Лучший</div><div class="value" id="statBest">0%</div></div>
+          <div class="stat-card"><div class="label">Худший</div><div class="value" id="statWorst">0%</div></div>
         </div>
       </div>
       <div class="panel">
@@ -267,6 +314,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
   </div>
 </div>
 
+<!-- Trade Modal -->
 <div class="modal-overlay" id="tradeModal">
   <div class="modal">
     <button class="modal-close" onclick="closeTradeModal()">×</button>
@@ -292,26 +340,62 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0f19;color:#e2e8f
         <div><span class="jf-label">Цена выхода (опц.)</span><input class="jf-input" type="number" step="0.01" id="tradeExit" placeholder=""></div>
         <div><span class="jf-label">Дата выхода (опц.)</span><input class="jf-input" type="datetime-local" id="tradeExitDate"></div>
       </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="tradeTrailing" onchange="toggleTrailInput()">
+        <label for="tradeTrailing">Трейлинг-стоп (ATR × <span id="trailMultLabel">1.5</span>)</label>
+      </div>
+      <div id="trailInputWrap" style="display:none">
+        <span class="jf-label">Множитель трейлинга</span>
+        <input class="jf-input" type="number" step="0.1" id="tradeTrailMult" value="1.5" oninput="document.getElementById('trailMultLabel').textContent=this.value">
+      </div>
       <div><span class="jf-label">Комментарий</span><input class="jf-input" type="text" id="tradeComment" placeholder="Например: Пробой EMA 9"></div>
       <button class="jf-btn" onclick="addTrade()">💾 Сохранить сделку</button>
     </div>
   </div>
 </div>
 
+<!-- Risk Calculator Modal -->
+<div class="modal-overlay" id="riskModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeRiskModal()">×</button>
+    <h3>🧮 Калькулятор риска</h3>
+    <div class="journal-form">
+      <div class="jf-row">
+        <div><span class="jf-label">Баланс ($)</span><input class="jf-input" type="number" id="riskBalance" value="10000" oninput="calcRisk()"></div>
+        <div><span class="jf-label">Риск (%)</span><input class="jf-input" type="number" id="riskPercent" value="1" step="0.1" oninput="calcRisk()"></div>
+      </div>
+      <div class="jf-row">
+        <div><span class="jf-label">Цена входа</span><input class="jf-input" type="number" id="riskEntry" step="0.01" oninput="calcRisk()"></div>
+        <div><span class="jf-label">Stop Loss</span><input class="jf-input" type="number" id="riskSL" step="0.01" oninput="calcRisk()"></div>
+      </div>
+      <div><span class="jf-label">Текущий ATR (авто)</span><input class="jf-input" type="number" id="riskAtr" step="0.01" readonly></div>
+      <div class="risk-result" id="riskResult">
+        <div class="rrow"><span>Риск в $:</span><span class="rval" id="rRisk">--</span></div>
+        <div class="rrow"><span>Пункты SL:</span><span class="rval" id="rPoints">--</span></div>
+        <div class="rrow"><span>Размер позиции ($):</span><span class="rval" id="rPosSize">--</span></div>
+        <div class="rrow"><span>Лоты (примерно):</span><span class="rval" id="rLots">--</span></div>
+        <div class="rrow"><span>Плечо (примерно):</span><span class="rval" id="rLeverage">--</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+
 const ASSETS = {
-  gold:  { name: 'Золото',  symbol: 'XAUUSDT', decimals: 2, bybit: 'XAUUSDT', okx: 'XAU-USDT-SWAP' },
-  silver:{ name: 'Серебро', symbol: 'XAGUSDT', decimals: 3, bybit: 'XAGUSDT', okx: 'XAG-USDT-SWAP' }
+  gold:  { name: 'Золото',  symbol: 'XAUUSDT', decimals: 2, bybit: 'XAUUSDT', okx: 'XAU-USDT-SWAP', tick: 0.01, lotSize: 0.01 },
+  silver:{ name: 'Серебро', symbol: 'XAGUSDT', decimals: 3, bybit: 'XAGUSDT', okx: 'XAG-USDT-SWAP', tick: 0.001, lotSize: 0.1 }
 };
 const TF_MAP = {
+  '1m':  { bybit: '1',   okx: '1m',  limit: 1000, label: '1 мин',    slice: null },
+  '5m':  { bybit: '5',   okx: '5m',  limit: 1000, label: '5 мин',    slice: null },
+  '15m': { bybit: '15',  okx: '15m', limit: 1000, label: '15 мин',   slice: null },
+  '30m': { bybit: '30',  okx: '30m', limit: 1000, label: '30 мин',   slice: null },
   '1h':  { bybit: '60',  okx: '1H',  limit: 200,  label: '1 час',    slice: null },
   '4h':  { bybit: '240', okx: '4H',  limit: 200,  label: '4 часа',   slice: null },
   '1d':  { bybit: 'D',   okx: '1D',  limit: 200,  label: '1 день',   slice: null },
   '1w':  { bybit: 'W',   okx: '1W',  limit: 100,  label: '1 неделя', slice: null },
-  '1M':  { bybit: 'M',   okx: '1M',  limit: 60,   label: '1 месяц',  slice: null },
-  '3M':  { bybit: 'D',   okx: '1D',  limit: 1000, label: '3 мес',    slice: 90 },
-  '1Y':  { bybit: 'D',   okx: '1D',  limit: 1000, label: '1 год',    slice: 365 },
-  'ALL': { bybit: 'D',   okx: '1D',  limit: 1000, label: 'Всё',      slice: null }
+  '1M':  { bybit: 'M',   okx: '1M',  limit: 60,   label: '1 месяц',  slice: null }
 };
 
 let currentAsset = 'gold';
@@ -320,12 +404,40 @@ let isDemo = false;
 let rawData = [];
 let lastSignal = null;
 let lastPrice = 0;
+let mtfSignal = null;
+let refreshInterval = null;
+let countdownVal = 60;
+let countdownTimer = null;
 
-let mainChart, candleSeries, volSeries, ema9s, ema21s, ema50s, bbUp, bbDn;
+let mainChart, candleSeries, volSeries, ema9s, ema21s, ema50s, bbUp, bbDn, vwapSeries;
 let rsiChart, rsiLine, rsiOb, rsiOs;
 let macdChart, macdLine, macdSig, macdHist;
 let equityChart, equitySeries;
 let slLines = [], tpLines = [];
+
+// Audio alert using oscillator (no external file needed)
+function playAlert(isBuy) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = isBuy ? 'sine' : 'sawtooth';
+    osc.frequency.setValueAtTime(isBuy ? 880 : 440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(isBuy ? 1200 : 300, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+function flashAlert(isBuy) {
+  const el = document.getElementById('alertFlash');
+  el.className = 'alert-flash show' + (isBuy ? '' : ' sell');
+  setTimeout(() => el.classList.remove('show'), 600);
+}
 
 async function fetchBybit(symbol, tf, limit) {
   const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${tf}&limit=${limit}`;
@@ -350,7 +462,7 @@ function generateDemoData(asset, count) {
   const out = [];
   let price = base;
   const now = Date.now()/1000;
-  const tfSec = currentTF==='1h'?3600:(currentTF==='4h'?14400:86400);
+  const tfSec = currentTF==='1m'?60:(currentTF==='5m'?300:(currentTF==='15m'?900:(currentTF==='30m'?1800:(currentTF==='1h'?3600:(currentTF==='4h'?14400:86400)))));
   for (let i=count; i>=0; i--) {
     const chg = (Math.random()-0.5)*vol;
     const open = price; price += chg;
@@ -416,25 +528,61 @@ function calcStoch(data, kp=14, dp=3) {
   const d=[];for(let i=dp-1;i<k.length;i++){const sl=k.slice(i-dp+1,i+1);d.push({time:sl[sl.length-1].time,value:sl.reduce((s,x)=>s+x.value,0)/dp});}
   return {k,d};
 }
+function calcVWAP(data) {
+  const out = [];
+  let cumTPV = 0, cumVol = 0;
+  // Reset VWAP daily (approximate by detecting day changes)
+  let lastDay = null;
+  for (let i = 0; i < data.length; i++) {
+    const d = new Date(data[i].time * 1000);
+    const dayKey = d.getUTCFullYear() + '-' + d.getUTCMonth() + '-' + d.getUTCDate();
+    if (lastDay !== null && lastDay !== dayKey) {
+      cumTPV = 0; cumVol = 0;
+    }
+    lastDay = dayKey;
+    const tp = (data[i].high + data[i].low + data[i].close) / 3;
+    cumTPV += tp * data[i].volume;
+    cumVol += data[i].volume;
+    out.push({ time: data[i].time, value: cumVol === 0 ? tp : cumTPV / cumVol });
+  }
+  return out;
+}
+function calcVolumeProfile(data, lookback=20) {
+  if (data.length < lookback) return { avg: data[data.length-1].volume, spike: false };
+  const slice = data.slice(-lookback);
+  const avg = slice.reduce((s,c)=>s+c.volume,0)/lookback;
+  const last = data[data.length-1].volume;
+  return { avg, spike: last > avg * 1.5, ratio: last/avg };
+}
 function generateSignals(data) {
   const e9=ema(data,9),e21=ema(data,21),e50=ema(data,50);
   const rv=rsi(data),mv=calcMacd(data),bv=calcBB(data),av=calcATR(data),sv=calcStoch(data);
+  const vwap = calcVWAP(data);
+  const volProfile = calcVolumeProfile(data);
   const li=data.length-1,last=data[li];
   const v9=e9[li].value,v21=e21[li].value,v50=e50[li].value;
   const r=rv[rv.length-1]?.value??50,m=mv.macd[li]?.value??0,ms=mv.signal[li]?.value??0;
   const b=bv[bv.length-1],a=av[av.length-1]?.value??0,sk=sv.k[sv.k.length-1]?.value??50;
+  const vw = vwap[vwap.length-1]?.value ?? last.close;
   const bbPos=b?(last.close-b.lower)/(b.upper-b.lower):0.5;
+  const vwapPos = (last.close - vw) / (b?(b.upper-b.lower):a*10);
   let score=0;
   if(v9>v21&&v21>v50)score+=2;else if(v9>v21)score+=1;else if(v9<v21&&v21<v50)score-=2;else if(v9<v21)score-=1;
   if(r<30)score+=2;else if(r<45)score+=1;else if(r>70)score-=2;else if(r>55)score-=1;
   if(m>ms&&mv.hist[li]?.value>(mv.hist[li-1]?.value||0))score+=1;else if(m<ms)score-=1;
   if(bbPos<0.2)score+=1;else if(bbPos>0.8)score-=1;
   if(sk<20)score+=1;else if(sk>80)score-=1;
+  if(last.close > vw && v9 > vw) score += 1;
+  else if(last.close < vw && v9 < vw) score -= 1;
+  if(volProfile.spike) {
+    if(score > 0) score += 1;
+    else if(score < 0) score -= 1;
+  }
   let sig='HOLD';
   if(score>=4)sig='STRONG_BUY';else if(score>=2)sig='BUY';else if(score<=-4)sig='STRONG_SELL';else if(score<=-2)sig='SELL';
   const slL=last.close-a*1.5,tpL=last.close+a*2.5,slS=last.close+a*1.5,tpS=last.close-a*2.5;
   const rh=Math.max(...data.slice(-50).map(c=>c.high)),rl=Math.min(...data.slice(-50).map(c=>c.low));
-  return {signal:sig,score,rsi:r,macd:m,macdSignal:ms,atr:a,bbPos,slLong:slL,tpLong:tpL,slShort:slS,tpShort:tpS,recentHigh:rh,recentLow:rl,ema9:e9,ema21:e21,ema50:e50,rsiData:rv,macdData:mv,bb:bv,lastPrice:last.close,prevClose:data[li-1]?.close??last.close};
+  return {signal:sig,score,rsi:r,macd:m,macdSignal:ms,atr:a,bbPos,vwapPos,vwap:vw,volSpike:volProfile.spike,volRatio:volProfile.ratio,slLong:slL,tpLong:tpL,slShort:slS,tpShort:tpS,recentHigh:rh,recentLow:rl,ema9:e9,ema21:e21,ema50:e50,rsiData:rv,macdData:mv,bb:bv,lastPrice:last.close,prevClose:data[li-1]?.close??last.close};
 }
 
 function initCharts() {
@@ -444,6 +592,7 @@ function initCharts() {
   candleSeries=mainChart.addCandlestickSeries({upColor:'#10b981',downColor:'#ef4444',borderUpColor:'#10b981',borderDownColor:'#ef4444',wickUpColor:'#10b981',wickDownColor:'#ef4444'});
   volSeries=mainChart.addHistogramSeries({color:'#3b82f6',priceFormat:{type:'volume'},priceScaleId:'',scaleMargins:{top:0.85,bottom:0}});volSeries.priceScale().applyOptions({scaleMargins:{top:0.85,bottom:0}});
   ema9s=mainChart.addLineSeries({color:'#f59e0b',lineWidth:1.5});ema21s=mainChart.addLineSeries({color:'#a855f7',lineWidth:1.5});ema50s=mainChart.addLineSeries({color:'#3b82f6',lineWidth:1});
+  vwapSeries=mainChart.addLineSeries({color:'#06b6d4',lineWidth:1.5,lineStyle:LightweightCharts.LineStyle.LargeDashed});
   bbUp=mainChart.addLineSeries({color:'#10b981',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});bbDn=mainChart.addLineSeries({color:'#ef4444',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});
 
   el('rsiChart').innerHTML='';
@@ -463,6 +612,8 @@ function updateCharts(data, sig) {
   candleSeries.setData(data.map(c=>({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close})));
   volSeries.setData(data.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(16,185,129,0.4)':'rgba(239,68,68,0.4)'})));
   ema9s.setData(sig.ema9.map(x=>({time:x.time,value:x.value})));ema21s.setData(sig.ema21.map(x=>({time:x.time,value:x.value})));ema50s.setData(sig.ema50.map(x=>({time:x.time,value:x.value})));
+  const vwapData = calcVWAP(data).map(x=>({time:x.time,value:x.value}));
+  vwapSeries.setData(vwapData);
   bbUp.setData(sig.bb.map(x=>({time:x.time,value:x.upper})));bbDn.setData(sig.bb.map(x=>({time:x.time,value:x.lower})));
   rsiLine.setData(sig.rsiData.map(x=>({time:x.time,value:x.value})));
   const lrt=sig.rsiData[sig.rsiData.length-1]?.time;if(lrt){rsiOb.setData([{time:sig.rsiData[0].time,value:70},{time:lrt,value:70}]);rsiOs.setData([{time:sig.rsiData[0].time,value:30},{time:lrt,value:30}]);}
@@ -494,12 +645,18 @@ function openTradeModal(prefill) {
     document.getElementById('tradeTP').value = '';
     document.getElementById('tradeComment').value = '';
   }
+  document.getElementById('tradeTrailing').checked = false;
+  toggleTrailInput();
   document.getElementById('tradeExit').value = '';
   document.getElementById('tradeExitDate').value = '';
   document.getElementById('tradeModal').classList.add('show');
 }
 function closeTradeModal() {
   document.getElementById('tradeModal').classList.remove('show');
+}
+function toggleTrailInput() {
+  const on = document.getElementById('tradeTrailing').checked;
+  document.getElementById('trailInputWrap').style.display = on ? 'block' : 'none';
 }
 function addTrade() {
   const type = document.getElementById('tradeType').value;
@@ -508,6 +665,8 @@ function addTrade() {
   const sl = document.getElementById('tradeSL').value ? parseFloat(document.getElementById('tradeSL').value) : null;
   const tp = document.getElementById('tradeTP').value ? parseFloat(document.getElementById('tradeTP').value) : null;
   const lots = parseFloat(document.getElementById('tradeLots').value) || 1;
+  const trailing = document.getElementById('tradeTrailing').checked;
+  const trailMult = trailing ? (parseFloat(document.getElementById('tradeTrailMult').value) || 1.5) : null;
   const exit = document.getElementById('tradeExit').value;
   const exitDate = document.getElementById('tradeExitDate').value;
   const comment = document.getElementById('tradeComment').value;
@@ -515,7 +674,7 @@ function addTrade() {
   const trades = getTrades();
   const trade = {
     id: Date.now(), type, entry, entryDate, entryTime: new Date(entryDate).getTime()/1000,
-    sl, tp, lots,
+    sl, tp, lots, trailing, trailMult,
     exit: exit ? parseFloat(exit) : null, exitDate: exitDate || null, exitTime: exitDate ? new Date(exitDate).getTime()/1000 : null,
     comment, status: exit ? 'closed' : 'open', closeReason: null
   };
@@ -540,6 +699,30 @@ function closeTrade(id, reason) {
   t.exitTime = Date.now()/1000;
   t.status = 'closed';
   t.closeReason = reason || 'manual';
+  saveTrades(trades);
+  renderJournal(); renderStats(); updateTradeMarkers(); updateSLTPOnChart();
+}
+function partialCloseTrade(id) {
+  const trades = getTrades();
+  const t = trades.find(x => x.id === id);
+  if (!t) return;
+  const currentPrice = rawData.length ? rawData[rawData.length-1].close : t.entry;
+  // Close 50% of the position
+  const halfLots = t.lots / 2;
+  if (halfLots < ASSETS[currentAsset].lotSize) { alert('Слишком маленький остаток для частичного закрытия'); return; }
+
+  // Create closed half
+  const closedTrade = {
+    id: Date.now() + 1, type: t.type, entry: t.entry, entryDate: t.entryDate, entryTime: t.entryTime,
+    sl: t.sl, tp: t.tp, lots: halfLots, trailing: t.trailing, trailMult: t.trailMult,
+    exit: currentPrice, exitDate: new Date().toISOString().slice(0,16).replace('T',' '), exitTime: Date.now()/1000,
+    comment: (t.comment || '') + ' [Закрыто 50%]', status: 'closed', closeReason: 'partial'
+  };
+  trades.push(closedTrade);
+
+  // Update original to keep remaining
+  t.lots = halfLots;
+  t.comment = (t.comment || '') + ' [Осталось 50%]';
   saveTrades(trades);
   renderJournal(); renderStats(); updateTradeMarkers(); updateSLTPOnChart();
 }
@@ -568,14 +751,19 @@ function renderJournal() {
       const pnl = isOpen ? currentPnl : calcPnl(t);
       const pnlStr = pnl !== null ? (pnl>=0?'+':'')+pnl.toFixed(2)+'%' : '--';
       const pnlClass = pnl!==null?(pnl>=0?'trade-pnl-pos':'trade-pnl-neg'):'';
-      const statusClass = t.closeReason==='sl'?'trade-status-sl':(t.closeReason==='tp'?'trade-status-tp':'trade-status-closed');
+      const statusClass = t.closeReason==='sl'?'trade-status-sl':(t.closeReason==='tp'?'trade-status-tp':(t.closeReason==='partial'?'trade-status-closed':'trade-status-closed'));
       const currentOrExit = isOpen ? (rawData.length?rawData[rawData.length-1].close.toFixed(ASSETS[currentAsset].decimals):'--') : (t.exit?parseFloat(t.exit).toFixed(ASSETS[currentAsset].decimals):'--');
-      const sltpInfo = (t.sl||t.tp) ? '<br><span style="color:#64748b;font-size:9px">SL:'+t.sl+' TP:'+t.tp+'</span>' : '';
+      const sltpInfo = (t.sl||t.tp) ? '<br><span style="color:#64748b;font-size:9px">SL:'+t.sl+' TP:'+t.tp+(t.trailing?' T':'')+'</span>' : '';
       html += '<tr><td class="trade-type-'+t.type+'">'+t.type+sltpInfo+'</td>';
       html += '<td>'+t.entry.toFixed(ASSETS[currentAsset].decimals)+'<br><span style="color:#64748b;font-size:9px">'+formatDate(t.entryDate)+'</span></td>';
       html += '<td>'+currentOrExit+(!isOpen?'<br><span style="color:#64748b;font-size:9px">'+formatDate(t.exitDate)+'</span>':'')+'</td>';
       html += '<td class="'+pnlClass+'">'+pnlStr+(t.closeReason?'<br><span class="'+statusClass+'" style="font-size:9px">'+t.closeReason.toUpperCase()+'</span>':'')+'</td>';
-      html += '<td>'+(isOpen?'<button class="jf-btn secondary" style="padding:4px 8px;font-size:11px" onclick="closeTrade('+t.id+','manual')">Закрыть</button>':'')+'<span class="trade-del" onclick="deleteTrade('+t.id+')">×</span></td></tr>';
+      html += '<td>';
+      if (isOpen) {
+        html += '<button class="jf-btn secondary" style="padding:4px 8px;font-size:11px;margin-right:4px" onclick="closeTrade('+t.id+',\'manual\')">Закрыть</button>';
+        html += '<button class="jf-btn warning" style="padding:4px 8px;font-size:11px;margin-right:4px" onclick="partialCloseTrade('+t.id+')">50%</button>';
+      }
+      html += '<span class="trade-del" onclick="deleteTrade('+t.id+')">×</span></td></tr>';
       if (t.comment) html += '<tr><td colspan="5" style="padding-top:0;color:#64748b;font-size:10px">💬 '+t.comment+'</td></tr>';
     }
     html += '</tbody></table>';
@@ -587,11 +775,31 @@ function renderJournal() {
 function renderStats() {
   const trades = getTrades().filter(t=>t.status==='closed');
   const total = trades.length;
-  const wins = trades.filter(t=>calcPnl(t)>0).length;
+  const pnls = trades.map(calcPnl).filter(v=>v!==null);
+  const wins = pnls.filter(v=>v>0).length;
   const winRate = total ? Math.round((wins/total)*100) : 0;
-  const pnls = trades.map(calcPnl);
   const totalPnl = pnls.reduce((s,v)=>s+v,0);
   const avgPnl = total ? totalPnl/total : 0;
+
+  // Extended stats
+  const winPnls = pnls.filter(v=>v>0);
+  const lossPnls = pnls.filter(v=>v<0);
+  const grossProfit = winPnls.reduce((s,v)=>s+v,0);
+  const grossLoss = Math.abs(lossPnls.reduce((s,v)=>s+v,0));
+  const profitFactor = grossLoss > 0 ? (grossProfit/grossLoss).toFixed(2) : (grossProfit > 0 ? '∞' : '0');
+  const best = pnls.length ? Math.max(...pnls) : 0;
+  const worst = pnls.length ? Math.min(...pnls) : 0;
+
+  // Max Drawdown
+  let maxDD = 0, peak = 100, equity = 100;
+  for (const t of trades.sort((a,b)=>a.entryTime-b.entryTime)) {
+    const pnl = calcPnl(t);
+    equity *= (1 + pnl/100);
+    if (equity > peak) peak = equity;
+    const dd = (peak - equity) / peak * 100;
+    if (dd > maxDD) maxDD = dd;
+  }
+
   document.getElementById('statTotal').textContent = total;
   document.getElementById('statWinRate').textContent = winRate+'%';
   document.getElementById('statWinRate').className = 'value ' + (winRate>=50?'up':'down');
@@ -599,6 +807,14 @@ function renderStats() {
   document.getElementById('statTotalPnl').className = 'value ' + (totalPnl>=0?'up':'down');
   document.getElementById('statAvgPnl').textContent = (avgPnl>=0?'+':'')+avgPnl.toFixed(2)+'%';
   document.getElementById('statAvgPnl').className = 'value ' + (avgPnl>=0?'up':'down');
+  document.getElementById('statMaxDD').textContent = maxDD.toFixed(1)+'%';
+  document.getElementById('statMaxDD').className = 'value down';
+  document.getElementById('statPF').textContent = profitFactor;
+  document.getElementById('statPF').className = 'value ' + (parseFloat(profitFactor)>=1.5?'up':(parseFloat(profitFactor)>=1?'':'down'));
+  document.getElementById('statBest').textContent = (best>=0?'+':'')+best.toFixed(2)+'%';
+  document.getElementById('statBest').className = 'value up';
+  document.getElementById('statWorst').textContent = (worst>=0?'+':'')+worst.toFixed(2)+'%';
+  document.getElementById('statWorst').className = 'value down';
 
   let equity = 100;
   const eqData = [{time: trades.length?trades[0].entryTime:Date.now()/1000, value:100}];
@@ -667,6 +883,19 @@ function checkSLTP() {
   let changed = false;
   for (const t of trades) {
     if (t.status !== 'open') continue;
+
+    // Trailing stop logic
+    if (t.trailing && t.trailMult && lastSignal) {
+      const trailDist = lastSignal.atr * t.trailMult;
+      if (t.type === 'LONG') {
+        const newSL = currentPrice - trailDist;
+        if (newSL > t.sl) t.sl = newSL;
+      } else {
+        const newSL = currentPrice + trailDist;
+        if (newSL < t.sl) t.sl = newSL;
+      }
+    }
+
     if (t.type === 'LONG') {
       if (t.sl && currentPrice <= t.sl) { t.exit = t.sl; t.exitTime = Date.now()/1000; t.exitDate = new Date().toISOString(); t.status = 'closed'; t.closeReason = 'sl'; changed = true; }
       else if (t.tp && currentPrice >= t.tp) { t.exit = t.tp; t.exitTime = Date.now()/1000; t.exitDate = new Date().toISOString(); t.status = 'closed'; t.closeReason = 'tp'; changed = true; }
@@ -690,6 +919,14 @@ function autoTradeFromSignal() {
   const comment = 'Авто-сделка по сигналу: ' + lastSignal.signal;
   openTradeModal({ type, entry, sl, tp, comment });
 }
+function quickTrade(type) {
+  if (!lastSignal) { alert('Дождитесь загрузки данных'); return; }
+  const entry = lastSignal.lastPrice;
+  const sl = type === 'LONG' ? lastSignal.slLong : lastSignal.slShort;
+  const tp = type === 'LONG' ? lastSignal.tpLong : lastSignal.tpShort;
+  const comment = 'Быстрая сделка: ' + type;
+  openTradeModal({ type, entry, sl, tp, comment });
+}
 function showAutoTradeBanner(sig) {
   const banner = document.getElementById('autoBanner');
   const panel = document.getElementById('autoTradePanel');
@@ -700,6 +937,43 @@ function showAutoTradeBanner(sig) {
   } else {
     banner.style.display = 'none';
     panel.style.display = 'none';
+  }
+}
+
+function getSession() {
+  const h = new Date().getUTCHours();
+  if (h >= 0 && h < 9) return { name: 'Азия', cls: 'session-asia', vol: 'низкая' };
+  if (h >= 9 && h < 16) return { name: 'Европа', cls: 'session-europe', vol: 'средняя' };
+  if (h >= 16 && h < 21) return { name: 'Америка', cls: 'session-america', vol: 'высокая' };
+  return { name: 'Межсессия', cls: 'session-none', vol: 'низкая' };
+}
+
+function updateSessionBadge() {
+  const s = getSession();
+  const el = document.getElementById('sessionBadge');
+  el.className = 'session-badge ' + s.cls;
+  el.textContent = s.name + ' · ' + s.vol;
+}
+
+async function fetchMTF() {
+  // Fetch higher TF signal for confirmation
+  const mtfMap = {'1m':'15m','5m':'1h','15m':'4h','30m':'4h','1h':'1d','4h':'1d','1d':'1w'};
+  const mtf = mtfMap[currentTF];
+  if (!mtf) { mtfSignal = null; return; }
+  const a = ASSETS[currentAsset];
+  const tf = TF_MAP[mtf];
+  try {
+    let d = await fetchBybit(a.bybit, tf.bybit, tf.limit);
+    if (tf.slice) d = d.slice(-tf.slice);
+    mtfSignal = generateSignals(d);
+  } catch(e) {
+    try {
+      let d = await fetchOKX(a.okx, tf.okx, tf.limit);
+      if (tf.slice) d = d.slice(-tf.slice);
+      mtfSignal = generateSignals(d);
+    } catch(e2) {
+      mtfSignal = null;
+    }
   }
 }
 
@@ -725,6 +999,9 @@ function updateUI(sig) {
   document.getElementById('sideMacd').className='metric-value '+(sig.macd>sig.macdSignal?'up':'down');
   document.getElementById('sideAtr').textContent=sig.atr.toFixed(a.decimals);
   document.getElementById('sideBB').textContent=(sig.bbPos*100).toFixed(1)+'%';
+  document.getElementById('sideVwap').textContent=(sig.vwapPos*100).toFixed(1)+'%';
+  document.getElementById('sideVol').textContent=sig.volSpike ? ('↑ '+sig.volRatio.toFixed(1)+'x') : 'норм';
+  document.getElementById('sideVol').className='metric-value '+(sig.volSpike?'up':'');
   document.getElementById('sideScore').textContent=(sig.score>0?'+':'')+sig.score;
   document.getElementById('sideScore').className='metric-value '+(sig.score>0?'up':(sig.score<0?'down':''));
 
@@ -734,15 +1011,31 @@ function updateUI(sig) {
   document.getElementById('slShort').textContent=sig.slShort.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
   document.getElementById('resLevel').textContent=sig.recentHigh.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
   document.getElementById('supLevel').textContent=sig.recentLow.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
+  document.getElementById('vwapLevel').textContent=sig.vwap.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
+
+  // MTF Panel
+  if (mtfSignal) {
+    document.getElementById('mtfTf').textContent = {'1m':'15м','5m':'1ч','15m':'4ч','30m':'4ч','1h':'1д','4h':'1д','1d':'1н'}[currentTF] || '--';
+    document.getElementById('mtfSignal').textContent = mtfSignal.signal.replace('_',' ');
+    const align = (sig.signal.includes('BUY') && mtfSignal.signal.includes('BUY')) || (sig.signal.includes('SELL') && mtfSignal.signal.includes('SELL'));
+    const alignEl = document.getElementById('mtfAlign');
+    alignEl.textContent = align ? '✅ Совпадает' : '⚠️ Расходятся';
+    alignEl.className = 'metric-value ' + (align?'up':'down');
+  } else {
+    document.getElementById('mtfTf').textContent = '--';
+    document.getElementById('mtfSignal').textContent = '--';
+    document.getElementById('mtfAlign').textContent = '--';
+  }
 
   let rec='';
-  if(sig.signal.includes('BUY')){const rr=((sig.tpLong-p)/(p-sig.slLong)).toFixed(2);rec='<b style="color:#34d399">Вход в LONG</b><br>Точка входа: около '+p.toFixed(a.decimals)+'<br>TP: <b style="color:#10b981">'+sig.tpLong.toFixed(a.decimals)+'</b> (+'+((sig.tpLong/p-1)*100).toFixed(2)+'%)<br>SL: <b style="color:#ef4444">'+sig.slLong.toFixed(a.decimals)+'</b><br>R/R: <b>1:'+rr+'</b>';}
-  else if(sig.signal.includes('SELL')){const rr=((p-sig.tpShort)/(sig.slShort-p)).toFixed(2);rec='<b style="color:#fb7185">Вход в SHORT</b><br>Точка входа: около '+p.toFixed(a.decimals)+'<br>TP: <b style="color:#10b981">'+sig.tpShort.toFixed(a.decimals)+'</b><br>SL: <b style="color:#ef4444">'+sig.slShort.toFixed(a.decimals)+'</b><br>R/R: <b>1:'+rr+'</b>';}
-  else{rec='<b style="color:#94a3b8">Ожидание</b><br>Дождитесь пробоя <b style="color:#f59e0b">'+sig.recentHigh.toFixed(a.decimals)+'</b> (LONG) или <b style="color:#3b82f6">'+sig.recentLow.toFixed(a.decimals)+'</b> (SHORT)';}
+  if(sig.signal.includes('BUY')){const rr=((sig.tpLong-p)/(p-sig.slLong)).toFixed(2);rec='<b style="color:#34d399">Вход в LONG</b><br>Точка входа: около '+p.toFixed(a.decimals)+'<br>TP: <b style="color:#10b981">'+sig.tpLong.toFixed(a.decimals)+'</b> (+'+((sig.tpLong/p-1)*100).toFixed(2)+'%)<br>SL: <b style="color:#ef4444">'+sig.slLong.toFixed(a.decimals)+'</b><br>R/R: <b>1:'+rr+'</b>'+(sig.volSpike?'<br><span style="color:#34d399">✓ Объём подтверждает</span>':'');}
+  else if(sig.signal.includes('SELL')){const rr=((p-sig.tpShort)/(sig.slShort-p)).toFixed(2);rec='<b style="color:#fb7185">Вход в SHORT</b><br>Точка входа: около '+p.toFixed(a.decimals)+'<br>TP: <b style="color:#10b981">'+sig.tpShort.toFixed(a.decimals)+'</b><br>SL: <b style="color:#ef4444">'+sig.slShort.toFixed(a.decimals)+'</b><br>R/R: <b>1:'+rr+'</b>'+(sig.volSpike?'<br><span style="color:#fb7185">✓ Объём подтверждает</span>':'');}
+  else{rec='<b style="color:#94a3b8">Ожидание</b><br>Дождитесь пробоя <b style="color:#f59e0b">'+sig.recentHigh.toFixed(a.decimals)+'</b> (LONG) или <b style="color:#3b82f6">'+sig.recentLow.toFixed(a.decimals)+'</b> (SHORT)'+(mtfSignal && mtfSignal.signal.includes('BUY')?'<br>Старший ТФ: бычий':(mtfSignal && mtfSignal.signal.includes('SELL')?'<br>Старший ТФ: медвежий':''));}
   document.getElementById('recommendation').innerHTML=rec;
   document.getElementById('lastUpdate').textContent='Обновлено: '+new Date().toLocaleString('ru-RU')+(isDemo?' (демо)':' (Bybit/OKX)');
 
   showAutoTradeBanner(sig);
+  updateSessionBadge();
 }
 
 function setSidebarTab(tab) {
@@ -754,12 +1047,31 @@ function setSidebarTab(tab) {
   if (tab==='stats') { renderStats(); }
 }
 
+function getRefreshInterval() {
+  if (['1m','5m'].includes(currentTF)) return 60000;
+  if (['15m','30m'].includes(currentTF)) return 120000;
+  return 300000;
+}
+
+function startCountdown() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownVal = Math.round(getRefreshInterval() / 1000);
+  document.getElementById('countdown').textContent = 'Обновление через ' + countdownVal + 'с';
+  countdownTimer = setInterval(() => {
+    countdownVal--;
+    if (countdownVal <= 0) countdownVal = Math.round(getRefreshInterval() / 1000);
+    document.getElementById('countdown').textContent = 'Обновление через ' + countdownVal + 'с';
+  }, 1000);
+}
+
 async function loadData() {
   const st=document.getElementById('status');
   st.innerHTML='<span class="spinner"></span> Загрузка...';st.className='status';
   document.getElementById('demoBanner').style.display='none';
   try {
     rawData = await fetchData();
+    // Fetch MTF in parallel
+    await fetchMTF();
     const sig=generateSignals(rawData);
     if(!mainChart)initCharts();
     updateCharts(rawData,sig);updateUI(sig);
@@ -767,6 +1079,22 @@ async function loadData() {
     st.className=isDemo?'status demo':'status online';
     if(isDemo)document.getElementById('demoBanner').style.display='block';
     renderJournal();renderStats();checkSLTP();
+
+    // Alert on strong signals
+    if (sig.signal === 'STRONG_BUY' || sig.signal === 'STRONG_SELL') {
+      const prevSig = localStorage.getItem('last_signal_' + currentAsset + '_' + currentTF);
+      if (prevSig !== sig.signal) {
+        playAlert(sig.signal === 'STRONG_BUY');
+        flashAlert(sig.signal === 'STRONG_BUY');
+        localStorage.setItem('last_signal_' + currentAsset + '_' + currentTF, sig.signal);
+      }
+    }
+
+    // Update risk calculator ATR
+    document.getElementById('riskAtr').value = sig.atr.toFixed(ASSETS[currentAsset].decimals);
+    calcRisk();
+
+    startCountdown();
   } catch(e) {
     st.innerHTML='🔴 '+e.message;st.className='status error';
     document.getElementById('recommendation').innerHTML='<div class="error-box">'+e.message+'</div>';
@@ -788,9 +1116,46 @@ function setTF(tf) {
   loadData();
 }
 
+// Risk Calculator
+function openRiskModal() {
+  document.getElementById('riskModal').classList.add('show');
+  calcRisk();
+}
+function closeRiskModal() {
+  document.getElementById('riskModal').classList.remove('show');
+}
+function calcRisk() {
+  const balance = parseFloat(document.getElementById('riskBalance').value) || 0;
+  const percent = parseFloat(document.getElementById('riskPercent').value) || 0;
+  const entry = parseFloat(document.getElementById('riskEntry').value) || 0;
+  const sl = parseFloat(document.getElementById('riskSL').value) || 0;
+  const atr = parseFloat(document.getElementById('riskAtr').value) || 0;
+
+  if (!balance || !percent || !entry || !sl) {
+    document.getElementById('rRisk').textContent = '--';
+    document.getElementById('rPoints').textContent = '--';
+    document.getElementById('rPosSize').textContent = '--';
+    document.getElementById('rLots').textContent = '--';
+    document.getElementById('rLeverage').textContent = '--';
+    return;
+  }
+
+  const riskAmount = balance * (percent / 100);
+  const slPoints = Math.abs(entry - sl);
+  const posSize = slPoints > 0 ? (riskAmount / slPoints) * entry : 0;
+  const lots = posSize > 0 ? posSize / entry : 0;
+  const leverage = entry > 0 ? posSize / balance : 0;
+
+  document.getElementById('rRisk').textContent = '$' + riskAmount.toFixed(2);
+  document.getElementById('rPoints').textContent = slPoints.toFixed(ASSETS[currentAsset].decimals);
+  document.getElementById('rPosSize').textContent = '$' + posSize.toFixed(2);
+  document.getElementById('rLots').textContent = lots.toFixed(3);
+  document.getElementById('rLeverage').textContent = leverage.toFixed(1) + 'x';
+}
+
 initCharts();
 loadData();
-setInterval(loadData,300000);
+refreshInterval = setInterval(loadData, getRefreshInterval());
 </script>
 </body>
 </html>

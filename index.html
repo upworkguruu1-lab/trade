@@ -8,7 +8,7 @@
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0b0f19;color:#e2e8f0;min-height:100vh}
-  .header{background:linear-gradient(90deg,#1e293b,#0f172a);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;flex-wrap:wrap;gap:12px}
+  .header{background:linear-gradient(90deg,#1e293b,#0f172a);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;flex-wrap:wrap;gap:12px}
   .header h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
   .status{font-size:12px;padding:4px 12px;border-radius:20px;background:#1e293b;color:#94a3b8;display:flex;align-items:center;gap:6px}
   .status.online{background:#064e3b;color:#34d399}
@@ -16,14 +16,15 @@
   .status.error{background:#450a0a;color:#fca5a5}
   .status.demo{background:#7c3aed;color:#ddd6fe}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-  .toolbar{background:#111827;padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #1e293b}
-  .btn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;background:#1e293b;color:#94a3b8}
+  .toolbar{background:#111827;padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #1e293b}
+  .btn{padding:7px 14px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;background:#1e293b;color:#94a3b8}
   .btn:hover{background:#334155;color:#e2e8f0}
   .btn.active{background:#3b82f6;color:#fff}
   .btn.gold-active{background:#f59e0b;color:#0f172a}
   .btn.silver-active{background:#94a3b8;color:#0f172a}
   .btn-refresh{background:#10b981;color:#fff}
-  .main{display:grid;grid-template-columns:1fr 300px;gap:16px;padding:16px 24px;max-width:1400px;margin:0 auto}
+  .btn-journal{background:#8b5cf6;color:#fff}
+  .main{display:grid;grid-template-columns:1fr 340px;gap:16px;padding:16px 24px;max-width:1500px;margin:0 auto}
   @media(max-width:1000px){.main{grid-template-columns:1fr}}
   .chart-wrap{background:#111827;border-radius:12px;border:1px solid #1e293b;overflow:hidden}
   .chart-header{padding:12px 16px;background:#1e293b;display:flex;justify-content:space-between;align-items:center}
@@ -33,7 +34,7 @@
   .change{font-size:12px;padding:2px 8px;border-radius:4px}
   .change.up{background:#064e3b;color:#34d399}
   .change.down{background:#450a0a;color:#fb7185}
-  #mainChart{height:400px}
+  #mainChart{height:420px}
   .subcharts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
   .subchart{background:#111827;border-radius:12px;border:1px solid #1e293b;padding:12px}
   .subchart-title{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
@@ -41,6 +42,12 @@
   .sidebar{display:flex;flex-direction:column;gap:12px}
   .panel{background:#111827;border-radius:12px;border:1px solid #1e293b;padding:16px}
   .panel-title{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-weight:700}
+  .sidebar-tabs{display:flex;gap:4px;margin-bottom:12px}
+  .sidebar-tab{flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;background:#1e293b;color:#94a3b8;transition:all .2s}
+  .sidebar-tab.active{background:#3b82f6;color:#fff}
+  .sidebar-tab:hover:not(.active){background:#334155}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
   .signal-box{padding:14px;border-radius:10px;text-align:center;margin-bottom:12px}
   .signal-STRONG_BUY{background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid #10b981}
   .signal-BUY{background:linear-gradient(135deg,#064e3b,#0f172a);border:1px solid #34d399}
@@ -75,8 +82,44 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .error-box{background:#450a0a;border:1px solid #ef4444;border-radius:10px;padding:14px;color:#fca5a5;font-size:13px;line-height:1.6}
   .error-box code{background:#1e293b;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px}
-  .demo-banner{background:#7c3aed;color:#fff;padding:10px 16px;text-align:center;font-size:13px;border-bottom:1px solid #1e293b}
-  .demo-banner a{color:#fbbf24;text-decoration:underline}
+  .demo-banner{background:#7c3aed;color:#fff;padding:10px 16px;text-align:center;font-size:13px;border-bottom:1px solid #1e293b;display:none}
+  .demo-banner a{color:#fbbf24;text-decoration:underline;cursor:pointer}
+  /* Journal */
+  .journal-form{display:grid;gap:10px;margin-bottom:16px}
+  .jf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .jf-input,.jf-select{width:100%;padding:8px 12px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px}
+  .jf-input:focus,.jf-select:focus{outline:none;border-color:#3b82f6}
+  .jf-label{font-size:11px;color:#94a3b8;margin-bottom:4px;display:block}
+  .jf-btn{width:100%;padding:10px;background:#10b981;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px}
+  .jf-btn:hover{background:#059669}
+  .jf-btn.secondary{background:#3b82f6}
+  .jf-btn.danger{background:#ef4444}
+  .trade-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  .trade-table th{text-align:left;padding:8px 6px;background:#1e293b;color:#94a3b8;font-weight:600;border-bottom:1px solid #334155}
+  .trade-table td{padding:8px 6px;border-bottom:1px solid #1e293b}
+  .trade-table tr:hover td{background:#1e293b}
+  .trade-type-LONG{color:#10b981;font-weight:700}
+  .trade-type-SHORT{color:#ef4444;font-weight:700}
+  .trade-pnl-pos{color:#10b981;font-weight:700}
+  .trade-pnl-neg{color:#ef4444;font-weight:700}
+  .trade-status-open{color:#f59e0b}
+  .trade-status-closed{color:#94a3b8}
+  .trade-del{color:#64748b;cursor:pointer;font-size:16px;line-height:1}
+  .trade-del:hover{color:#ef4444}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat-card{background:#1e293b;border-radius:8px;padding:12px;text-align:center}
+  .stat-card .label{font-size:10px;color:#64748b;text-transform:uppercase}
+  .stat-card .value{font-size:20px;font-weight:700;margin-top:4px}
+  .stat-card .value.up{color:#10b981}
+  .stat-card .value.down{color:#ef4444}
+  .equity-chart{height:160px;margin-top:12px}
+  .empty-state{text-align:center;padding:20px;color:#64748b;font-size:13px}
+  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.show{display:flex}
+  .modal{background:#111827;border:1px solid #334155;border-radius:16px;padding:24px;width:100%;max-width:420px}
+  .modal h3{margin:0 0 16px;font-size:18px}
+  .modal-close{float:right;background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer}
+  .modal-close:hover{color:#fff}
 </style>
 <base target="_blank">
 </head>
@@ -88,18 +131,24 @@
 </div>
 
 <div class="toolbar">
-  <button class="btn active gold-active" id="btn-gold" onclick="setAsset('gold')">🥇 Золото XAUUSDT</button>
-  <button class="btn" id="btn-silver" onclick="setAsset('silver')">🥈 Серебро XAGUSDT</button>
-  <div style="width:1px;height:28px;background:#334155;margin:0 8px"></div>
-  <button class="btn active" id="btn-1h" onclick="setTF('1h')">1 час</button>
-  <button class="btn" id="btn-4h" onclick="setTF('4h')">4 часа</button>
-  <button class="btn" id="btn-1d" onclick="setTF('1d')">1 день</button>
+  <button class="btn active gold-active" id="btn-gold" onclick="setAsset('gold')">🥇 Золото</button>
+  <button class="btn" id="btn-silver" onclick="setAsset('silver')">🥈 Серебро</button>
+  <div style="width:1px;height:26px;background:#334155;margin:0 6px"></div>
+  <button class="btn active" id="btn-1h" onclick="setTF('1h')">1ч</button>
+  <button class="btn" id="btn-4h" onclick="setTF('4h')">4ч</button>
+  <button class="btn" id="btn-1d" onclick="setTF('1d')">1д</button>
+  <button class="btn" id="btn-1w" onclick="setTF('1w')">1н</button>
+  <button class="btn" id="btn-1M" onclick="setTF('1M')">1мес</button>
+  <button class="btn" id="btn-3M" onclick="setTF('3M')">3мес</button>
+  <button class="btn" id="btn-1Y" onclick="setTF('1Y')">1год</button>
+  <button class="btn" id="btn-ALL" onclick="setTF('ALL')">Всё</button>
   <div style="flex:1"></div>
-  <button class="btn btn-refresh" onclick="loadData()">🔄 Обновить</button>
+  <button class="btn btn-journal" onclick="openTradeModal()">➕ Сделка</button>
+  <button class="btn btn-refresh" onclick="loadData()">🔄</button>
 </div>
 
-<div id="demoBanner" style="display:none" class="demo-banner">
-  ⚠️ Демо-режим: API брокера недоступен. Данные симулированы. Для реальных котировок разместите файл на хостинге с доступом к Bybit/OKX API или используйте <a href="#" onclick="showTV()">TradingView виджет</a>.
+<div class="demo-banner" id="demoBanner">
+  ⚠️ Демо-режим: API брокера недоступен. Данные симулированы. Для реальных котировок разместите файл на хостинге.
 </div>
 
 <div class="main">
@@ -122,6 +171,8 @@
         <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>EMA 50</div>
         <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>BB Upper</div>
         <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>BB Lower</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div>LONG вход</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div>SHORT вход</div>
       </div>
     </div>
     <div class="subcharts">
@@ -137,45 +188,121 @@
   </div>
 
   <div class="sidebar">
-    <div class="panel">
-      <div class="panel-title">Торговый сигнал</div>
-      <div class="signal-box signal-HOLD" id="signalBox">
-        <div class="signal-text" id="signalText">HOLD</div>
-        <div class="signal-desc" id="signalDesc">Загрузка...</div>
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" onclick="setSidebarTab('analysis')">📊 Анализ</button>
+      <button class="sidebar-tab" onclick="setSidebarTab('journal')">📝 Журнал</button>
+      <button class="sidebar-tab" onclick="setSidebarTab('stats')">📈 Стат</button>
+    </div>
+
+    <!-- TAB: ANALYSIS -->
+    <div class="tab-content active" id="tab-analysis">
+      <div class="panel">
+        <div class="panel-title">Торговый сигнал</div>
+        <div class="signal-box signal-HOLD" id="signalBox">
+          <div class="signal-text" id="signalText">HOLD</div>
+          <div class="signal-desc" id="signalDesc">Загрузка...</div>
+        </div>
+        <div class="metric-row"><span class="metric-label">RSI</span><span class="metric-value" id="sideRsi">--</span></div>
+        <div class="metric-row"><span class="metric-label">MACD</span><span class="metric-value" id="sideMacd">--</span></div>
+        <div class="metric-row"><span class="metric-label">ATR</span><span class="metric-value" id="sideAtr">--</span></div>
+        <div class="metric-row"><span class="metric-label">BB Pos</span><span class="metric-value" id="sideBB">--</span></div>
+        <div class="metric-row"><span class="metric-label">Score</span><span class="metric-value" id="sideScore">--</span></div>
       </div>
-      <div class="metric-row"><span class="metric-label">RSI</span><span class="metric-value" id="sideRsi">--</span></div>
-      <div class="metric-row"><span class="metric-label">MACD</span><span class="metric-value" id="sideMacd">--</span></div>
-      <div class="metric-row"><span class="metric-label">ATR</span><span class="metric-value" id="sideAtr">--</span></div>
-      <div class="metric-row"><span class="metric-label">BB Position</span><span class="metric-value" id="sideBB">--</span></div>
-      <div class="metric-row"><span class="metric-label">Score</span><span class="metric-value" id="sideScore">--</span></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-title">Уровни LONG</div>
-      <div class="level-grid">
-        <div class="level-card tp"><div class="label">Take Profit</div><div class="value" id="tpLong">--</div></div>
-        <div class="level-card sl"><div class="label">Stop Loss</div><div class="value" id="slLong">--</div></div>
+      <div class="panel">
+        <div class="panel-title">Уровни LONG</div>
+        <div class="level-grid">
+          <div class="level-card tp"><div class="label">Take Profit</div><div class="value" id="tpLong">--</div></div>
+          <div class="level-card sl"><div class="label">Stop Loss</div><div class="value" id="slLong">--</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Уровни SHORT</div>
+        <div class="level-grid">
+          <div class="level-card tp"><div class="label">Take Profit</div><div class="value" id="tpShort">--</div></div>
+          <div class="level-card sl"><div class="label">Stop Loss</div><div class="value" id="slShort">--</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Ключевые уровни</div>
+        <div class="metric-row"><span class="metric-label">Сопротивление</span><span class="metric-value" style="color:#f59e0b" id="resLevel">--</span></div>
+        <div class="metric-row"><span class="metric-label">Поддержка</span><span class="metric-value" style="color:#3b82f6" id="supLevel">--</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Рекомендация</div>
+        <div class="recommendation" id="recommendation">Загрузка...</div>
+        <div class="last-update" id="lastUpdate">--</div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-title">Уровни SHORT</div>
-      <div class="level-grid">
-        <div class="level-card tp"><div class="label">Take Profit</div><div class="value" id="tpShort">--</div></div>
-        <div class="level-card sl"><div class="label">Stop Loss</div><div class="value" id="slShort">--</div></div>
+    <!-- TAB: JOURNAL -->
+    <div class="tab-content" id="tab-journal">
+      <div class="panel">
+        <div class="panel-title">Открытые сделки</div>
+        <div id="openTradesList"><div class="empty-state">Нет открытых сделок</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">История сделок</div>
+        <div id="closedTradesList"><div class="empty-state">Нет закрытых сделок</div></div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-title">Ключевые уровни</div>
-      <div class="metric-row"><span class="metric-label">Сопротивление</span><span class="metric-value" style="color:#f59e0b" id="resLevel">--</span></div>
-      <div class="metric-row"><span class="metric-label">Поддержка</span><span class="metric-value" style="color:#3b82f6" id="supLevel">--</span></div>
+    <!-- TAB: STATS -->
+    <div class="tab-content" id="tab-stats">
+      <div class="panel">
+        <div class="panel-title">Статистика</div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="label">Всего</div><div class="value" id="statTotal">0</div></div>
+          <div class="stat-card"><div class="label">Win Rate</div><div class="value" id="statWinRate">0%</div></div>
+          <div class="stat-card"><div class="label">Общий P&L</div><div class="value" id="statTotalPnl">0%</div></div>
+          <div class="stat-card"><div class="label">Средний</div><div class="value" id="statAvgPnl">0%</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Кривая эквити</div>
+        <div id="equityChart" class="equity-chart"></div>
+      </div>
     </div>
+  </div>
+</div>
 
-    <div class="panel">
-      <div class="panel-title">Рекомендация</div>
-      <div class="recommendation" id="recommendation">Загрузка данных...</div>
-      <div class="last-update" id="lastUpdate">--</div>
+<!-- MODAL: ADD TRADE -->
+<div class="modal-overlay" id="tradeModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeTradeModal()">×</button>
+    <h3>📝 Новая сделка</h3>
+    <div class="journal-form">
+      <div>
+        <span class="jf-label">Тип сделки</span>
+        <select class="jf-select" id="tradeType">
+          <option value="LONG">🟢 LONG (покупка)</option>
+          <option value="SHORT">🔴 SHORT (продажа)</option>
+        </select>
+      </div>
+      <div class="jf-row">
+        <div>
+          <span class="jf-label">Цена входа</span>
+          <input class="jf-input" type="number" step="0.01" id="tradeEntry" placeholder="2480.50">
+        </div>
+        <div>
+          <span class="jf-label">Дата входа</span>
+          <input class="jf-input" type="datetime-local" id="tradeEntryDate">
+        </div>
+      </div>
+      <div class="jf-row">
+        <div>
+          <span class="jf-label">Цена выхода (опц.)</span>
+          <input class="jf-input" type="number" step="0.01" id="tradeExit" placeholder="">
+        </div>
+        <div>
+          <span class="jf-label">Дата выхода (опц.)</span>
+          <input class="jf-input" type="datetime-local" id="tradeExitDate">
+        </div>
+      </div>
+      <div>
+        <span class="jf-label">Комментарий</span>
+        <input class="jf-input" type="text" id="tradeComment" placeholder="Например: Пробой EMA 9">
+      </div>
+      <button class="jf-btn" onclick="addTrade()">💾 Сохранить сделку</button>
     </div>
   </div>
 </div>
@@ -183,55 +310,50 @@
 <script>
 // ==================== CONFIG ====================
 const ASSETS = {
-  gold:  { name: 'Золото', symbol: 'XAUUSDT', decimals: 2, bybit: 'XAUUSDT', okx: 'XAU-USDT-SWAP' },
+  gold:  { name: 'Золото',  symbol: 'XAUUSDT', decimals: 2, bybit: 'XAUUSDT', okx: 'XAU-USDT-SWAP' },
   silver:{ name: 'Серебро', symbol: 'XAGUSDT', decimals: 3, bybit: 'XAGUSDT', okx: 'XAG-USDT-SWAP' }
+};
+
+const TF_MAP = {
+  '1h':  { bybit: '60',  okx: '1H',  limit: 200,  label: '1 час',    slice: null },
+  '4h':  { bybit: '240', okx: '4H',  limit: 200,  label: '4 часа',   slice: null },
+  '1d':  { bybit: 'D',   okx: '1D',  limit: 200,  label: '1 день',   slice: null },
+  '1w':  { bybit: 'W',   okx: '1W',  limit: 100,  label: '1 неделя', slice: null },
+  '1M':  { bybit: 'M',   okx: '1M',  limit: 60,   label: '1 месяц',  slice: null },
+  '3M':  { bybit: 'D',   okx: '1D',  limit: 1000, label: '3 мес',    slice: 90 },
+  '1Y':  { bybit: 'D',   okx: '1D',  limit: 1000, label: '1 год',    slice: 365 },
+  'ALL': { bybit: 'D',   okx: '1D',  limit: 1000, label: 'Всё',      slice: null }
 };
 
 let currentAsset = 'gold';
 let currentTF = '1h';
 let isDemo = false;
+let rawData = [];
 
-// Chart instances
+// Charts
 let mainChart, candleSeries, volSeries, ema9s, ema21s, ema50s, bbUp, bbDn;
 let rsiChart, rsiLine, rsiOb, rsiOs;
 let macdChart, macdLine, macdSig, macdHist;
+let equityChart, equitySeries;
 
 // ==================== DATA FETCH ====================
 async function fetchBybit(symbol, tf, limit) {
-  const map = { '1h': '60', '4h': '240', '1d': 'D' };
-  const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${map[tf]}&limit=${limit}`;
+  const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${tf}&limit=${limit}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('Bybit HTTP ' + res.status);
   const j = await res.json();
   if (j.retCode !== 0) throw new Error(j.retMsg || 'Bybit error');
-  // Bybit returns [timestamp, open, high, low, close, volume, turnover] — newest first
-  const list = j.result.list.reverse(); // oldest first
-  return list.map(r => ({
-    time: Math.floor(parseInt(r[0]) / 1000),
-    open: parseFloat(r[1]),
-    high: parseFloat(r[2]),
-    low: parseFloat(r[3]),
-    close: parseFloat(r[4]),
-    volume: parseFloat(r[5])
-  }));
+  const list = j.result.list.reverse();
+  return list.map(r => ({ time: Math.floor(parseInt(r[0])/1000), open: parseFloat(r[1]), high: parseFloat(r[2]), low: parseFloat(r[3]), close: parseFloat(r[4]), volume: parseFloat(r[5]) }));
 }
 
 async function fetchOKX(instId, tf, limit) {
-  const map = { '1h': '1H', '4h': '4H', '1d': '1D' };
-  const url = `https://www.okx.com/api/v5/market/history-candles?instId=${instId}&bar=${map[tf]}&limit=${limit}`;
+  const url = `https://www.okx.com/api/v5/market/history-candles?instId=${instId}&bar=${tf}&limit=${limit}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('OKX HTTP ' + res.status);
   const j = await res.json();
   if (j.code !== '0') throw new Error(j.msg || 'OKX error');
-  // OKX returns oldest first? Actually history-candles returns oldest first
-  return j.data.map(r => ({
-    time: Math.floor(parseInt(r[0]) / 1000),
-    open: parseFloat(r[1]),
-    high: parseFloat(r[2]),
-    low: parseFloat(r[3]),
-    close: parseFloat(r[4]),
-    volume: parseFloat(r[5])
-  }));
+  return j.data.map(r => ({ time: Math.floor(parseInt(r[0])/1000), open: parseFloat(r[1]), high: parseFloat(r[2]), low: parseFloat(r[3]), close: parseFloat(r[4]), volume: parseFloat(r[5]) }));
 }
 
 function generateDemoData(asset, count) {
@@ -239,283 +361,374 @@ function generateDemoData(asset, count) {
   const vol = asset === 'gold' ? 12 : 0.15;
   const out = [];
   let price = base;
-  const now = Date.now() / 1000;
-  const tfSec = currentTF === '1h' ? 3600 : (currentTF === '4h' ? 14400 : 86400);
-  for (let i = count; i >= 0; i--) {
-    const change = (Math.random() - 0.5) * vol;
-    const open = price;
-    price += change;
-    const high = Math.max(open, price) + Math.random() * vol * 0.3;
-    const low = Math.min(open, price) - Math.random() * vol * 0.3;
-    out.push({
-      time: Math.floor(now - i * tfSec),
-      open: parseFloat(open.toFixed(asset === 'gold' ? 2 : 3)),
-      high: parseFloat(high.toFixed(asset === 'gold' ? 2 : 3)),
-      low: parseFloat(low.toFixed(asset === 'gold' ? 2 : 3)),
-      close: parseFloat(price.toFixed(asset === 'gold' ? 2 : 3)),
-      volume: Math.floor(Math.random() * 10000 + 2000)
-    });
+  const now = Date.now()/1000;
+  const tfSec = currentTF==='1h'?3600:(currentTF==='4h'?14400:86400);
+  for (let i=count; i>=0; i--) {
+    const chg = (Math.random()-0.5)*vol;
+    const open = price; price += chg;
+    out.push({ time: Math.floor(now-i*tfSec), open: parseFloat(open.toFixed(ASSETS[asset].decimals)), high: parseFloat((Math.max(open,price)+Math.random()*vol*0.3).toFixed(ASSETS[asset].decimals)), low: parseFloat((Math.min(open,price)-Math.random()*vol*0.3).toFixed(ASSETS[asset].decimals)), close: parseFloat(price.toFixed(ASSETS[asset].decimals)), volume: Math.floor(Math.random()*10000+2000) });
   }
   return out;
 }
 
 async function fetchData() {
   const a = ASSETS[currentAsset];
-  const limit = currentTF === '1d' ? 100 : 200;
+  const tf = TF_MAP[currentTF];
   try {
-    const data = await fetchBybit(a.bybit, currentTF, limit);
+    let d = await fetchBybit(a.bybit, tf.bybit, tf.limit);
     isDemo = false;
-    return data;
-  } catch (e1) {
-    console.warn('Bybit failed:', e1.message);
+    if (tf.slice) d = d.slice(-tf.slice);
+    return d;
+  } catch(e1) {
     try {
-      const data = await fetchOKX(a.okx, currentTF, limit);
+      let d = await fetchOKX(a.okx, tf.okx, tf.limit);
       isDemo = false;
-      return data;
-    } catch (e2) {
-      console.warn('OKX failed:', e2.message);
+      if (tf.slice) d = d.slice(-tf.slice);
+      return d;
+    } catch(e2) {
       isDemo = true;
-      return generateDemoData(currentAsset, 150);
+      return generateDemoData(currentAsset, tf.slice || 150);
     }
   }
 }
 
 // ==================== INDICATORS ====================
-function ema(data, period) {
-  const k = 2 / (period + 1), out = [];
-  let v = data[0].close;
-  for (let i = 0; i < data.length; i++) { v = data[i].close * k + v * (1 - k); out.push({ time: data[i].time, value: v }); }
+function ema(data, p) {
+  const k=2/(p+1), out=[]; let v=data[0].close;
+  for(let i=0;i<data.length;i++){v=data[i].close*k+v*(1-k);out.push({time:data[i].time,value:v});}
   return out;
 }
-
-function rsi(data, period = 14) {
-  const out = []; let g = 0, l = 0;
-  for (let i = 1; i <= period; i++) { const d = data[i].close - data[i - 1].close; if (d > 0) g += d; else l -= d; }
-  let ag = g / period, al = l / period;
-  for (let i = period; i < data.length; i++) {
-    const d = data[i].close - data[i - 1].close;
-    ag = (ag * (period - 1) + (d > 0 ? d : 0)) / period;
-    al = (al * (period - 1) + (d < 0 ? -d : 0)) / period;
-    const rs = al === 0 ? 100 : ag / al;
-    out.push({ time: data[i].time, value: 100 - (100 / (1 + rs)) });
-  }
+function rsi(data, p=14) {
+  const out=[]; let g=0,l=0;
+  for(let i=1;i<=p;i++){const d=data[i].close-data[i-1].close;if(d>0)g+=d;else l-=d;}
+  let ag=g/p,al=l/p;
+  for(let i=p;i<data.length;i++){const d=data[i].close-data[i-1].close;ag=(ag*(p-1)+(d>0?d:0))/p;al=(al*(p-1)+(d<0?-d:0))/p;const rs=al===0?100:ag/al;out.push({time:data[i].time,value:100-(100/(1+rs))});}
   return out;
 }
-
 function calcMacd(data) {
-  const e12 = ema(data, 12).map(x => x.value), e26 = ema(data, 26).map(x => x.value);
-  const m = []; for (let i = 0; i < data.length; i++) m.push({ time: data[i].time, value: e12[i] - e26[i] });
-  const s = []; let sv = m[0].value; const k = 2 / 10;
-  for (let i = 0; i < m.length; i++) { sv = m[i].value * k + sv * (1 - k); s.push({ time: m[i].time, value: sv }); }
-  const h = []; for (let i = 0; i < m.length; i++) h.push({ time: m[i].time, value: m[i].value - s[i].value });
-  return { macd: m, signal: s, hist: h };
+  const e12=ema(data,12).map(x=>x.value),e26=ema(data,26).map(x=>x.value);
+  const m=[];for(let i=0;i<data.length;i++)m.push({time:data[i].time,value:e12[i]-e26[i]});
+  const s=[];let sv=m[0].value;const k=2/10;
+  for(let i=0;i<m.length;i++){sv=m[i].value*k+sv*(1-k);s.push({time:m[i].time,value:sv});}
+  const h=[];for(let i=0;i<m.length;i++)h.push({time:m[i].time,value:m[i].value-s[i].value});
+  return {macd:m,signal:s,hist:h};
 }
-
-function calcBB(data, period = 20, mult = 2) {
-  const out = [];
-  for (let i = period - 1; i < data.length; i++) {
-    const sl = data.slice(i - period + 1, i + 1);
-    const mean = sl.reduce((s, c) => s + c.close, 0) / period;
-    const std = Math.sqrt(sl.reduce((s, c) => s + Math.pow(c.close - mean, 2), 0) / period);
-    out.push({ time: data[i].time, upper: mean + mult * std, middle: mean, lower: mean - mult * std });
-  }
+function calcBB(data, p=20, mult=2) {
+  const out=[];
+  for(let i=p-1;i<data.length;i++){const sl=data.slice(i-p+1,i+1);const mean=sl.reduce((s,c)=>s+c.close,0)/p;const std=Math.sqrt(sl.reduce((s,c)=>s+Math.pow(c.close-mean,2),0)/p);out.push({time:data[i].time,upper:mean+mult*std,middle:mean,lower:mean-mult*std});}
   return out;
 }
-
-function calcATR(data, period = 14) {
-  const out = [], tr = [];
-  for (let i = 0; i < data.length; i++) {
-    if (i === 0) { tr.push(data[i].high - data[i].low); continue; }
-    tr.push(Math.max(data[i].high - data[i].low, Math.abs(data[i].high - data[i - 1].close), Math.abs(data[i].low - data[i - 1].close)));
-  }
-  let av = tr.slice(0, period).reduce((s, v) => s + v, 0) / period;
-  for (let i = period - 1; i < data.length; i++) { if (i >= period) av = (av * (period - 1) + tr[i]) / period; out.push({ time: data[i].time, value: av }); }
+function calcATR(data, p=14) {
+  const out=[],tr=[];
+  for(let i=0;i<data.length;i++){if(i===0){tr.push(data[i].high-data[i].low);continue;}tr.push(Math.max(data[i].high-data[i].low,Math.abs(data[i].high-data[i-1].close),Math.abs(data[i].low-data[i-1].close)));}
+  let av=tr.slice(0,p).reduce((s,v)=>s+v,0)/p;
+  for(let i=p-1;i<data.length;i++){if(i>=p)av=(av*(p-1)+tr[i])/p;out.push({time:data[i].time,value:av});}
   return out;
 }
-
-function calcStoch(data, kp = 14, dp = 3) {
-  const k = [];
-  for (let i = kp - 1; i < data.length; i++) {
-    const sl = data.slice(i - kp + 1, i + 1);
-    const lo = Math.min(...sl.map(c => c.low)), hi = Math.max(...sl.map(c => c.high));
-    k.push({ time: data[i].time, value: hi === lo ? 50 : 100 * (data[i].close - lo) / (hi - lo) });
-  }
-  const d = [];
-  for (let i = dp - 1; i < k.length; i++) {
-    const sl = k.slice(i - dp + 1, i + 1);
-    d.push({ time: sl[sl.length - 1].time, value: sl.reduce((s, x) => s + x.value, 0) / dp });
-  }
-  return { k, d };
+function calcStoch(data, kp=14, dp=3) {
+  const k=[];for(let i=kp-1;i<data.length;i++){const sl=data.slice(i-kp+1,i+1);const lo=Math.min(...sl.map(c=>c.low)),hi=Math.max(...sl.map(c=>c.high));k.push({time:data[i].time,value:hi===lo?50:100*(data[i].close-lo)/(hi-lo)});}
+  const d=[];for(let i=dp-1;i<k.length;i++){const sl=k.slice(i-dp+1,i+1);d.push({time:sl[sl.length-1].time,value:sl.reduce((s,x)=>s+x.value,0)/dp});}
+  return {k,d};
 }
-
 function generateSignals(data) {
-  const e9 = ema(data, 9), e21 = ema(data, 21), e50 = ema(data, 50);
-  const rv = rsi(data), mv = calcMacd(data), bv = calcBB(data), av = calcATR(data), sv = calcStoch(data);
-  const li = data.length - 1, last = data[li];
-  const v9 = e9[li].value, v21 = e21[li].value, v50 = e50[li].value;
-  const r = rv[rv.length - 1]?.value ?? 50, m = mv.macd[li]?.value ?? 0, ms = mv.signal[li]?.value ?? 0;
-  const b = bv[bv.length - 1], a = av[av.length - 1]?.value ?? 0, sk = sv.k[sv.k.length - 1]?.value ?? 50;
-  const bbPos = b ? (last.close - b.lower) / (b.upper - b.lower) : 0.5;
-
-  let score = 0;
-  if (v9 > v21 && v21 > v50) score += 2; else if (v9 > v21) score += 1;
-  else if (v9 < v21 && v21 < v50) score -= 2; else if (v9 < v21) score -= 1;
-  if (r < 30) score += 2; else if (r < 45) score += 1; else if (r > 70) score -= 2; else if (r > 55) score -= 1;
-  if (m > ms && mv.hist[li]?.value > (mv.hist[li - 1]?.value || 0)) score += 1; else if (m < ms) score -= 1;
-  if (bbPos < 0.2) score += 1; else if (bbPos > 0.8) score -= 1;
-  if (sk < 20) score += 1; else if (sk > 80) score -= 1;
-
-  let sig = 'HOLD';
-  if (score >= 4) sig = 'STRONG_BUY'; else if (score >= 2) sig = 'BUY';
-  else if (score <= -4) sig = 'STRONG_SELL'; else if (score <= -2) sig = 'SELL';
-
-  const slL = last.close - a * 1.5, tpL = last.close + a * 2.5;
-  const slS = last.close + a * 1.5, tpS = last.close - a * 2.5;
-  const rh = Math.max(...data.slice(-50).map(c => c.high)), rl = Math.min(...data.slice(-50).map(c => c.low));
-  return { signal: sig, score, rsi: r, macd: m, macdSignal: ms, atr: a, bbPos, slLong: slL, tpLong: tpL, slShort: slS, tpShort: tpS, recentHigh: rh, recentLow: rl, ema9: e9, ema21: e21, ema50: e50, rsiData: rv, macdData: mv, bb: bv, lastPrice: last.close, prevClose: data[li - 1]?.close ?? last.close };
+  const e9=ema(data,9),e21=ema(data,21),e50=ema(data,50);
+  const rv=rsi(data),mv=calcMacd(data),bv=calcBB(data),av=calcATR(data),sv=calcStoch(data);
+  const li=data.length-1,last=data[li];
+  const v9=e9[li].value,v21=e21[li].value,v50=e50[li].value;
+  const r=rv[rv.length-1]?.value??50,m=mv.macd[li]?.value??0,ms=mv.signal[li]?.value??0;
+  const b=bv[bv.length-1],a=av[av.length-1]?.value??0,sk=sv.k[sv.k.length-1]?.value??50;
+  const bbPos=b?(last.close-b.lower)/(b.upper-b.lower):0.5;
+  let score=0;
+  if(v9>v21&&v21>v50)score+=2;else if(v9>v21)score+=1;else if(v9<v21&&v21<v50)score-=2;else if(v9<v21)score-=1;
+  if(r<30)score+=2;else if(r<45)score+=1;else if(r>70)score-=2;else if(r>55)score-=1;
+  if(m>ms&&mv.hist[li]?.value>(mv.hist[li-1]?.value||0))score+=1;else if(m<ms)score-=1;
+  if(bbPos<0.2)score+=1;else if(bbPos>0.8)score-=1;
+  if(sk<20)score+=1;else if(sk>80)score-=1;
+  let sig='HOLD';
+  if(score>=4)sig='STRONG_BUY';else if(score>=2)sig='BUY';else if(score<=-4)sig='STRONG_SELL';else if(score<=-2)sig='SELL';
+  const slL=last.close-a*1.5,tpL=last.close+a*2.5,slS=last.close+a*1.5,tpS=last.close-a*2.5;
+  const rh=Math.max(...data.slice(-50).map(c=>c.high)),rl=Math.min(...data.slice(-50).map(c=>c.low));
+  return {signal:sig,score,rsi:r,macd:m,macdSignal:ms,atr:a,bbPos,slLong:slL,tpLong:tpL,slShort:slS,tpShort:tpS,recentHigh:rh,recentLow:rl,ema9:e9,ema21:e21,ema50:e50,rsiData:rv,macdData:mv,bb:bv,lastPrice:last.close,prevClose:data[li-1]?.close??last.close};
 }
 
 // ==================== CHARTS ====================
 function initCharts() {
-  const el = id => document.getElementById(id);
-  el('mainChart').innerHTML = '';
-  mainChart = LightweightCharts.createChart(el('mainChart'), {
-    layout: { background: { color: '#111827' }, textColor: '#94a3b8' },
-    grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
-    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-    rightPriceScale: { borderColor: '#1e293b' },
-    timeScale: { borderColor: '#1e293b', timeVisible: true },
-    autoSize: true
-  });
-  candleSeries = mainChart.addCandlestickSeries({ upColor: '#10b981', downColor: '#ef4444', borderUpColor: '#10b981', borderDownColor: '#ef4444', wickUpColor: '#10b981', wickDownColor: '#ef4444' });
-  volSeries = mainChart.addHistogramSeries({ color: '#3b82f6', priceFormat: { type: 'volume' }, priceScaleId: '', scaleMargins: { top: 0.85, bottom: 0 } });
-  volSeries.priceScale().applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
-  ema9s = mainChart.addLineSeries({ color: '#f59e0b', lineWidth: 1.5 });
-  ema21s = mainChart.addLineSeries({ color: '#a855f7', lineWidth: 1.5 });
-  ema50s = mainChart.addLineSeries({ color: '#3b82f6', lineWidth: 1 });
-  bbUp = mainChart.addLineSeries({ color: '#10b981', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
-  bbDn = mainChart.addLineSeries({ color: '#ef4444', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  const el=id=>document.getElementById(id);
+  el('mainChart').innerHTML='';
+  mainChart=LightweightCharts.createChart(el('mainChart'),{layout:{background:{color:'#111827'},textColor:'#94a3b8'},grid:{vertLines:{color:'#1e293b'},horzLines:{color:'#1e293b'}},crosshair:{mode:LightweightCharts.CrosshairMode.Normal},rightPriceScale:{borderColor:'#1e293b'},timeScale:{borderColor:'#1e293b',timeVisible:true},autoSize:true});
+  candleSeries=mainChart.addCandlestickSeries({upColor:'#10b981',downColor:'#ef4444',borderUpColor:'#10b981',borderDownColor:'#ef4444',wickUpColor:'#10b981',wickDownColor:'#ef4444'});
+  volSeries=mainChart.addHistogramSeries({color:'#3b82f6',priceFormat:{type:'volume'},priceScaleId:'',scaleMargins:{top:0.85,bottom:0}});volSeries.priceScale().applyOptions({scaleMargins:{top:0.85,bottom:0}});
+  ema9s=mainChart.addLineSeries({color:'#f59e0b',lineWidth:1.5});ema21s=mainChart.addLineSeries({color:'#a855f7',lineWidth:1.5});ema50s=mainChart.addLineSeries({color:'#3b82f6',lineWidth:1});
+  bbUp=mainChart.addLineSeries({color:'#10b981',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});bbDn=mainChart.addLineSeries({color:'#ef4444',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});
 
-  el('rsiChart').innerHTML = '';
-  rsiChart = LightweightCharts.createChart(el('rsiChart'), { layout: { background: { color: '#111827' }, textColor: '#94a3b8' }, grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } }, rightPriceScale: { borderColor: '#1e293b' }, timeScale: { borderColor: '#1e293b', visible: false }, autoSize: true });
-  rsiLine = rsiChart.addLineSeries({ color: '#3b82f6', lineWidth: 1.5 });
-  rsiOb = rsiChart.addLineSeries({ color: '#ef4444', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, lastValueVisible: false });
-  rsiOs = rsiChart.addLineSeries({ color: '#10b981', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, lastValueVisible: false });
+  el('rsiChart').innerHTML='';
+  rsiChart=LightweightCharts.createChart(el('rsiChart'),{layout:{background:{color:'#111827'},textColor:'#94a3b8'},grid:{vertLines:{color:'#1e293b'},horzLines:{color:'#1e293b'}},rightPriceScale:{borderColor:'#1e293b'},timeScale:{borderColor:'#1e293b',visible:false},autoSize:true});
+  rsiLine=rsiChart.addLineSeries({color:'#3b82f6',lineWidth:1.5});rsiOb=rsiChart.addLineSeries({color:'#ef4444',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed,lastValueVisible:false});rsiOs=rsiChart.addLineSeries({color:'#10b981',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed,lastValueVisible:false});
 
-  el('macdChart').innerHTML = '';
-  macdChart = LightweightCharts.createChart(el('macdChart'), { layout: { background: { color: '#111827' }, textColor: '#94a3b8' }, grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } }, rightPriceScale: { borderColor: '#1e293b' }, timeScale: { borderColor: '#1e293b', visible: false }, autoSize: true });
-  macdLine = macdChart.addLineSeries({ color: '#3b82f6', lineWidth: 1.5 });
-  macdSig = macdChart.addLineSeries({ color: '#f59e0b', lineWidth: 1.5 });
-  macdHist = macdChart.addHistogramSeries({ color: '#64748b', priceScaleId: '' });
-  macdHist.priceScale().applyOptions({ scaleMargins: { top: 0.2, bottom: 0.2 } });
+  el('macdChart').innerHTML='';
+  macdChart=LightweightCharts.createChart(el('macdChart'),{layout:{background:{color:'#111827'},textColor:'#94a3b8'},grid:{vertLines:{color:'#1e293b'},horzLines:{color:'#1e293b'}},rightPriceScale:{borderColor:'#1e293b'},timeScale:{borderColor:'#1e293b',visible:false},autoSize:true});
+  macdLine=macdChart.addLineSeries({color:'#3b82f6',lineWidth:1.5});macdSig=macdChart.addLineSeries({color:'#f59e0b',lineWidth:1.5});macdHist=macdChart.addHistogramSeries({color:'#64748b',priceScaleId:''});macdHist.priceScale().applyOptions({scaleMargins:{top:0.2,bottom:0.2}});
+
+  // Equity chart
+  el('equityChart').innerHTML='';
+  equityChart=LightweightCharts.createChart(el('equityChart'),{layout:{background:{color:'#111827'},textColor:'#94a3b8'},grid:{vertLines:{color:'#1e293b'},horzLines:{color:'#1e293b'}},rightPriceScale:{borderColor:'#1e293b'},timeScale:{borderColor:'#1e293b',visible:false},autoSize:true});
+  equitySeries=equityChart.addLineSeries({color:'#3b82f6',lineWidth:2});
 }
 
 function updateCharts(data, sig) {
-  candleSeries.setData(data.map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close })));
-  volSeries.setData(data.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)' })));
-  ema9s.setData(sig.ema9.map(x => ({ time: x.time, value: x.value })));
-  ema21s.setData(sig.ema21.map(x => ({ time: x.time, value: x.value })));
-  ema50s.setData(sig.ema50.map(x => ({ time: x.time, value: x.value })));
-  bbUp.setData(sig.bb.map(x => ({ time: x.time, value: x.upper })));
-  bbDn.setData(sig.bb.map(x => ({ time: x.time, value: x.lower })));
-  rsiLine.setData(sig.rsiData.map(x => ({ time: x.time, value: x.value })));
-  const lrt = sig.rsiData[sig.rsiData.length - 1]?.time;
-  if (lrt) { rsiOb.setData([{ time: sig.rsiData[0].time, value: 70 }, { time: lrt, value: 70 }]); rsiOs.setData([{ time: sig.rsiData[0].time, value: 30 }, { time: lrt, value: 30 }]); }
-  macdLine.setData(sig.macdData.macd.map(x => ({ time: x.time, value: x.value })));
-  macdSig.setData(sig.macdData.signal.map(x => ({ time: x.time, value: x.value })));
-  macdHist.setData(sig.macdData.hist.map(x => ({ time: x.time, value: x.value, color: x.value >= 0 ? 'rgba(16,185,129,0.6)' : 'rgba(239,68,68,0.6)' })));
-  mainChart.timeScale().fitContent(); rsiChart.timeScale().fitContent(); macdChart.timeScale().fitContent();
+  candleSeries.setData(data.map(c=>({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close})));
+  volSeries.setData(data.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(16,185,129,0.4)':'rgba(239,68,68,0.4)'})));
+  ema9s.setData(sig.ema9.map(x=>({time:x.time,value:x.value})));ema21s.setData(sig.ema21.map(x=>({time:x.time,value:x.value})));ema50s.setData(sig.ema50.map(x=>({time:x.time,value:x.value})));
+  bbUp.setData(sig.bb.map(x=>({time:x.time,value:x.upper})));bbDn.setData(sig.bb.map(x=>({time:x.time,value:x.lower})));
+  rsiLine.setData(sig.rsiData.map(x=>({time:x.time,value:x.value})));
+  const lrt=sig.rsiData[sig.rsiData.length-1]?.time;if(lrt){rsiOb.setData([{time:sig.rsiData[0].time,value:70},{time:lrt,value:70}]);rsiOs.setData([{time:sig.rsiData[0].time,value:30},{time:lrt,value:30}]);}
+  macdLine.setData(sig.macdData.macd.map(x=>({time:x.time,value:x.value})));macdSig.setData(sig.macdData.signal.map(x=>({time:x.time,value:x.value})));
+  macdHist.setData(sig.macdData.hist.map(x=>({time:x.time,value:x.value,color:x.value>=0?'rgba(16,185,129,0.6)':'rgba(239,68,68,0.6)'})));
+  mainChart.timeScale().fitContent();rsiChart.timeScale().fitContent();macdChart.timeScale().fitContent();
+  updateTradeMarkers();
+}
+
+// ==================== TRADE JOURNAL ====================
+function getTrades() {
+  const key = 'scalping_trades_' + currentAsset;
+  return JSON.parse(localStorage.getItem(key) || '[]');
+}
+function saveTrades(trades) {
+  localStorage.setItem('scalping_trades_' + currentAsset, JSON.stringify(trades));
+}
+function openTradeModal() {
+  const now = new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  document.getElementById('tradeEntryDate').value = now.toISOString().slice(0,16);
+  document.getElementById('tradeModal').classList.add('show');
+}
+function closeTradeModal() {
+  document.getElementById('tradeModal').classList.remove('show');
+  document.getElementById('tradeEntry').value='';document.getElementById('tradeExit').value='';document.getElementById('tradeComment').value='';
+}
+function addTrade() {
+  const type = document.getElementById('tradeType').value;
+  const entry = parseFloat(document.getElementById('tradeEntry').value);
+  const entryDate = document.getElementById('tradeEntryDate').value;
+  const exit = document.getElementById('tradeExit').value;
+  const exitDate = document.getElementById('tradeExitDate').value;
+  const comment = document.getElementById('tradeComment').value;
+  if (!entry || !entryDate) { alert('Укажите цену и дату входа'); return; }
+  const trades = getTrades();
+  const trade = {
+    id: Date.now(), type, entry, entryDate, entryTime: new Date(entryDate).getTime()/1000,
+    exit: exit ? parseFloat(exit) : null, exitDate: exitDate || null, exitTime: exitDate ? new Date(exitDate).getTime()/1000 : null,
+    comment, status: exit ? 'closed' : 'open'
+  };
+  trades.push(trade);
+  saveTrades(trades);
+  closeTradeModal();
+  renderJournal();
+  renderStats();
+  updateTradeMarkers();
+}
+function deleteTrade(id) {
+  if (!confirm('Удалить сделку?')) return;
+  const trades = getTrades().filter(t => t.id !== id);
+  saveTrades(trades);
+  renderJournal();
+  renderStats();
+  updateTradeMarkers();
+}
+function closeTrade(id) {
+  const trades = getTrades();
+  const t = trades.find(x => x.id === id);
+  if (!t) return;
+  const currentPrice = rawData.length ? rawData[rawData.length-1].close : t.entry;
+  t.exit = currentPrice;
+  t.exitDate = new Date().toISOString().slice(0,16).replace('T',' ');
+  t.exitTime = Date.now()/1000;
+  t.status = 'closed';
+  saveTrades(trades);
+  renderJournal();
+  renderStats();
+  updateTradeMarkers();
+}
+function calcPnl(trade) {
+  if (!trade.exit) return null;
+  if (trade.type === 'LONG') return ((trade.exit - trade.entry) / trade.entry) * 100;
+  return ((trade.entry - trade.exit) / trade.entry) * 100;
+}
+function formatDate(d) {
+  if (!d) return '--';
+  const date = new Date(d);
+  return date.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}) + ' ' + date.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+}
+function renderJournal() {
+  const trades = getTrades().sort((a,b)=>b.entryTime-a.entryTime);
+  const open = trades.filter(t=>t.status==='open');
+  const closed = trades.filter(t=>t.status==='closed');
+
+  const renderList = (list, elId, isOpen) => {
+    const el = document.getElementById(elId);
+    if (!list.length) { el.innerHTML = '<div class="empty-state">Нет сделок</div>'; return; }
+    let html = '<table class="trade-table"><thead><tr><th>Тип</th><th>Вход</th><th>'+(isOpen?'Тек.цена':'Выход')+'</th><th>P&L</th><th></th></tr></thead><tbody>';
+    for (const t of list) {
+      const pnl = isOpen ? (rawData.length ? ((t.type==='LONG'?(rawData[rawData.length-1].close-t.entry)/t.entry:(t.entry-rawData[rawData.length-1].close)/t.entry)*100) : 0) : calcPnl(t);
+      const pnlStr = pnl !== null ? (pnl>=0?'+':'')+pnl.toFixed(2)+'%' : '--';
+      const pnlClass = pnl!==null?(pnl>=0?'trade-pnl-pos':'trade-pnl-neg'):'';
+      const currentOrExit = isOpen ? (rawData.length?rawData[rawData.length-1].close.toFixed(ASSETS[currentAsset].decimals):'--') : t.exit;
+      html += `<tr>
+        <td class="trade-type-${t.type}">${t.type}</td>
+        <td>${t.entry.toFixed(ASSETS[currentAsset].decimals)}<br><span style="color:#64748b;font-size:10px">${formatDate(t.entryDate)}</span></td>
+        <td>${parseFloat(currentOrExit).toFixed(ASSETS[currentAsset].decimals)}${!isOpen?'<br><span style="color:#64748b;font-size:10px">'+formatDate(t.exitDate)+'</span>':''}</td>
+        <td class="${pnlClass}">${pnlStr}</td>
+        <td>${isOpen?'<button class="jf-btn secondary" style="padding:4px 8px;font-size:11px" onclick="closeTrade('+t.id+')">Закрыть</button>':''}<span class="trade-del" onclick="deleteTrade(${t.id})">×</span></td>
+      </tr>`;
+      if (t.comment) html += `<tr><td colspan="5" style="padding-top:0;color:#64748b;font-size:11px">💬 ${t.comment}</td></tr>`;
+    }
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  };
+  renderList(open, 'openTradesList', true);
+  renderList(closed, 'closedTradesList', false);
+}
+function renderStats() {
+  const trades = getTrades().filter(t=>t.status==='closed');
+  const total = trades.length;
+  const wins = trades.filter(t=>calcPnl(t)>0).length;
+  const winRate = total ? Math.round((wins/total)*100) : 0;
+  const pnls = trades.map(calcPnl);
+  const totalPnl = pnls.reduce((s,v)=>s+v,0);
+  const avgPnl = total ? totalPnl/total : 0;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statWinRate').textContent = winRate+'%';
+  document.getElementById('statWinRate').className = 'value ' + (winRate>=50?'up':'down');
+  document.getElementById('statTotalPnl').textContent = (totalPnl>=0?'+':'')+totalPnl.toFixed(2)+'%';
+  document.getElementById('statTotalPnl').className = 'value ' + (totalPnl>=0?'up':'down');
+  document.getElementById('statAvgPnl').textContent = (avgPnl>=0?'+':'')+avgPnl.toFixed(2)+'%';
+  document.getElementById('statAvgPnl').className = 'value ' + (avgPnl>=0?'up':'down');
+
+  // Equity curve
+  let equity = 100;
+  const eqData = [{time: trades.length?trades[0].entryTime:Date.now()/1000, value:100}];
+  for (const t of trades.sort((a,b)=>a.entryTime-b.entryTime)) {
+    const pnl = calcPnl(t);
+    equity *= (1 + pnl/100);
+    eqData.push({time: t.exitTime, value: parseFloat(equity.toFixed(2))});
+  }
+  if (equitySeries) equitySeries.setData(eqData);
+  if (equityChart) equityChart.timeScale().fitContent();
+}
+function updateTradeMarkers() {
+  if (!candleSeries) return;
+  const trades = getTrades();
+  const markers = [];
+  for (const t of trades) {
+    // Entry marker
+    markers.push({
+      time: t.entryTime,
+      position: t.type==='LONG'?'belowBar':'aboveBar',
+      color: t.type==='LONG'?'#10b981':'#ef4444',
+      shape: t.type==='LONG'?'arrowUp':'arrowDown',
+      text: t.type + ' ' + t.entry.toFixed(ASSETS[currentAsset].decimals),
+      size: 2
+    });
+    if (t.status==='closed' && t.exitTime) {
+      markers.push({
+        time: t.exitTime,
+        position: t.type==='LONG'?'aboveBar':'belowBar',
+        color: calcPnl(t)>=0?'#10b981':'#ef4444',
+        shape: 'circle',
+        text: (calcPnl(t)>=0?'+':'')+calcPnl(t).toFixed(1)+'%',
+        size: 1
+      });
+    }
+  }
+  candleSeries.setMarkers(markers);
 }
 
 // ==================== UI ====================
 function updateUI(sig) {
-  const a = ASSETS[currentAsset], p = sig.lastPrice, prev = sig.prevClose, ch = p - prev, chp = (ch / prev) * 100, up = ch >= 0;
-  document.getElementById('currentPrice').textContent = p.toLocaleString('ru-RU', { minimumFractionDigits: a.decimals, maximumFractionDigits: a.decimals });
-  document.getElementById('currentPrice').className = 'price ' + (up ? 'up' : 'down');
-  document.getElementById('priceInfo').textContent = (isDemo ? '⚠️ ДЕМО — ' : '') + a.name + ' · ' + currentTF.toUpperCase();
-  document.getElementById('priceChange').textContent = (up ? '+' : '') + ch.toFixed(a.decimals) + ' (' + (up ? '+' : '') + chp.toFixed(2) + '%)';
-  document.getElementById('priceChange').className = 'change ' + (up ? 'up' : 'down');
-  document.getElementById('priceRange').textContent = 'H: ' + sig.recentHigh.toFixed(a.decimals) + '  L: ' + sig.recentLow.toFixed(a.decimals);
+  const a=ASSETS[currentAsset],p=sig.lastPrice,prev=sig.prevClose,ch=p-prev,chp=(ch/prev)*100,up=ch>=0;
+  document.getElementById('currentPrice').textContent=p.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals,maximumFractionDigits:a.decimals});
+  document.getElementById('currentPrice').className='price '+(up?'up':'down');
+  document.getElementById('priceInfo').textContent=(isDemo?'⚠️ ДЕМО — ':'')+a.name+' · '+TF_MAP[currentTF].label;
+  document.getElementById('priceChange').textContent=(up?'+':'')+ch.toFixed(a.decimals)+' ('+(up?'+':'')+chp.toFixed(2)+'%)';
+  document.getElementById('priceChange').className='change '+(up?'up':'down');
+  document.getElementById('priceRange').textContent='H: '+sig.recentHigh.toFixed(a.decimals)+'  L: '+sig.recentLow.toFixed(a.decimals);
 
-  const sb = document.getElementById('signalBox'); sb.className = 'signal-box signal-' + sig.signal;
-  document.getElementById('signalText').textContent = sig.signal.replace('_', ' ');
-  const dm = { 'STRONG_BUY': 'Сильный бычий сигнал. Все индикаторы подтверждают рост.', 'BUY': 'Умеренный бычий сигнал. Возможен вход в LONG.', 'HOLD': 'Нет чёткого направления. Рынок в боковике.', 'SELL': 'Умеренный медвежий сигнал. Возможен вход в SHORT.', 'STRONG_SELL': 'Сильный медвежий сигнал. Все индикаторы подтверждают снижение.' };
-  document.getElementById('signalDesc').textContent = dm[sig.signal];
+  const sb=document.getElementById('signalBox');sb.className='signal-box signal-'+sig.signal;
+  document.getElementById('signalText').textContent=sig.signal.replace('_',' ');
+  const dm={'STRONG_BUY':'Сильный бычий сигнал.','BUY':'Умеренный бычий сигнал.','HOLD':'Нет чёткого направления.','SELL':'Умеренный медвежий сигнал.','STRONG_SELL':'Сильный медвежий сигнал.'};
+  document.getElementById('signalDesc').textContent=dm[sig.signal];
 
-  document.getElementById('sideRsi').textContent = sig.rsi.toFixed(2);
-  document.getElementById('sideRsi').className = 'metric-value ' + (sig.rsi > 70 ? 'down' : (sig.rsi < 30 ? 'up' : ''));
-  document.getElementById('sideMacd').textContent = sig.macd.toFixed(4);
-  document.getElementById('sideMacd').className = 'metric-value ' + (sig.macd > sig.macdSignal ? 'up' : 'down');
-  document.getElementById('sideAtr').textContent = sig.atr.toFixed(a.decimals);
-  document.getElementById('sideBB').textContent = (sig.bbPos * 100).toFixed(1) + '%';
-  document.getElementById('sideScore').textContent = (sig.score > 0 ? '+' : '') + sig.score;
-  document.getElementById('sideScore').className = 'metric-value ' + (sig.score > 0 ? 'up' : (sig.score < 0 ? 'down' : ''));
+  document.getElementById('sideRsi').textContent=sig.rsi.toFixed(2);
+  document.getElementById('sideRsi').className='metric-value '+(sig.rsi>70?'down':(sig.rsi<30?'up':''));
+  document.getElementById('sideMacd').textContent=sig.macd.toFixed(4);
+  document.getElementById('sideMacd').className='metric-value '+(sig.macd>sig.macdSignal?'up':'down');
+  document.getElementById('sideAtr').textContent=sig.atr.toFixed(a.decimals);
+  document.getElementById('sideBB').textContent=(sig.bbPos*100).toFixed(1)+'%';
+  document.getElementById('sideScore').textContent=(sig.score>0?'+':'')+sig.score;
+  document.getElementById('sideScore').className='metric-value '+(sig.score>0?'up':(sig.score<0?'down':''));
 
-  document.getElementById('tpLong').textContent = sig.tpLong.toLocaleString('ru-RU', { minimumFractionDigits: a.decimals });
-  document.getElementById('slLong').textContent = sig.slLong.toLocaleString('ru-RU', { minimumFractionDigits: a.decimals });
-  document.getElementById('tpShort').textContent = sig.tpShort.toLocaleString('ru-RU', { minimumFractionDigits: a.decimals });
-  document.getElementById('slShort').textContent = sig.slShort.toLocaleString('ru-RU', { minimumFractionDigits: a.decimals });
-  document.getElementById('resLevel').textContent = sig.recentHigh.toLocaleString('ru-RU', { minimumFractionDigits: a.decimals });
-  document.getElementById('supLevel').textContent = sig.recentLow.toLocaleString('ru-RU', { minimumFractionDigits: a.decimals });
+  document.getElementById('tpLong').textContent=sig.tpLong.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
+  document.getElementById('slLong').textContent=sig.slLong.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
+  document.getElementById('tpShort').textContent=sig.tpShort.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
+  document.getElementById('slShort').textContent=sig.slShort.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
+  document.getElementById('resLevel').textContent=sig.recentHigh.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
+  document.getElementById('supLevel').textContent=sig.recentLow.toLocaleString('ru-RU',{minimumFractionDigits:a.decimals});
 
-  let rec = '';
-  if (sig.signal.includes('BUY')) { const rr = ((sig.tpLong - p) / (p - sig.slLong)).toFixed(2); rec = '<b style="color:#34d399">Вход в LONG</b><br>Точка входа: около ' + p.toFixed(a.decimals) + '<br>TP: <b style="color:#10b981">' + sig.tpLong.toFixed(a.decimals) + '</b> (+' + ((sig.tpLong / p - 1) * 100).toFixed(2) + '%)<br>SL: <b style="color:#ef4444">' + sig.slLong.toFixed(a.decimals) + '</b><br>R/R: <b>1:' + rr + '</b>'; }
-  else if (sig.signal.includes('SELL')) { const rr = ((p - sig.tpShort) / (sig.slShort - p)).toFixed(2); rec = '<b style="color:#fb7185">Вход в SHORT</b><br>Точка входа: около ' + p.toFixed(a.decimals) + '<br>TP: <b style="color:#10b981">' + sig.tpShort.toFixed(a.decimals) + '</b><br>SL: <b style="color:#ef4444">' + sig.slShort.toFixed(a.decimals) + '</b><br>R/R: <b>1:' + rr + '</b>'; }
-  else { rec = '<b style="color:#94a3b8">Ожидание</b><br>Дождитесь пробоя <b style="color:#f59e0b">' + sig.recentHigh.toFixed(a.decimals) + '</b> (LONG) или <b style="color:#3b82f6">' + sig.recentLow.toFixed(a.decimals) + '</b> (SHORT)'; }
-  document.getElementById('recommendation').innerHTML = rec;
-  document.getElementById('lastUpdate').textContent = 'Обновлено: ' + new Date().toLocaleString('ru-RU') + (isDemo ? ' (демо-данные)' : ' (Bybit/OKX API)');
+  let rec='';
+  if(sig.signal.includes('BUY')){const rr=((sig.tpLong-p)/(p-sig.slLong)).toFixed(2);rec='<b style="color:#34d399">Вход в LONG</b><br>Точка входа: около '+p.toFixed(a.decimals)+'<br>TP: <b style="color:#10b981">'+sig.tpLong.toFixed(a.decimals)+'</b> (+'+((sig.tpLong/p-1)*100).toFixed(2)+'%)<br>SL: <b style="color:#ef4444">'+sig.slLong.toFixed(a.decimals)+'</b><br>R/R: <b>1:'+rr+'</b>';}
+  else if(sig.signal.includes('SELL')){const rr=((p-sig.tpShort)/(sig.slShort-p)).toFixed(2);rec='<b style="color:#fb7185">Вход в SHORT</b><br>Точка входа: около '+p.toFixed(a.decimals)+'<br>TP: <b style="color:#10b981">'+sig.tpShort.toFixed(a.decimals)+'</b><br>SL: <b style="color:#ef4444">'+sig.slShort.toFixed(a.decimals)+'</b><br>R/R: <b>1:'+rr+'</b>';}
+  else{rec='<b style="color:#94a3b8">Ожидание</b><br>Дождитесь пробоя <b style="color:#f59e0b">'+sig.recentHigh.toFixed(a.decimals)+'</b> (LONG) или <b style="color:#3b82f6">'+sig.recentLow.toFixed(a.decimals)+'</b> (SHORT)';;}
+  document.getElementById('recommendation').innerHTML=rec;
+  document.getElementById('lastUpdate').textContent='Обновлено: '+new Date().toLocaleString('ru-RU')+(isDemo?' (демо)':' (Bybit/OKX)');
+}
+
+function setSidebarTab(tab) {
+  document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (tab==='journal') { renderJournal(); }
+  if (tab==='stats') { renderStats(); }
 }
 
 // ==================== MAIN ====================
 async function loadData() {
-  const st = document.getElementById('status');
-  st.innerHTML = '<span class="spinner"></span> Загрузка...'; st.className = 'status';
-  document.getElementById('demoBanner').style.display = 'none';
+  const st=document.getElementById('status');
+  st.innerHTML='<span class="spinner"></span> Загрузка...';st.className='status';
+  document.getElementById('demoBanner').style.display='none';
   try {
-    const data = await fetchData();
-    const sig = generateSignals(data);
-    if (!mainChart) initCharts();
-    updateCharts(data, sig); updateUI(sig);
-    st.innerHTML = isDemo ? '⚠️ Демо-режим' : '🟢 Онлайн — Bybit/OKX API';
-    st.className = isDemo ? 'status demo' : 'status online';
-    if (isDemo) document.getElementById('demoBanner').style.display = 'block';
-  } catch (e) {
-    st.innerHTML = '🔴 Ошибка: ' + e.message; st.className = 'status error';
-    document.getElementById('recommendation').innerHTML = '<div class="error-box">' + e.message + '<br><br>Если вы открываете файл локально (file://), попробуйте запустить через локальный сервер:<br><code>npx serve</code> или <code>python -m http.server</code><br><br>Или разместите на любом хостинге (GitHub Pages, Netlify, etc.)</div>';
+    rawData = await fetchData();
+    const sig=generateSignals(rawData);
+    if(!mainChart)initCharts();
+    updateCharts(rawData,sig);updateUI(sig);
+    st.innerHTML=isDemo?'⚠️ Демо-режим':'🟢 Онлайн — '+currentAsset.toUpperCase();
+    st.className=isDemo?'status demo':'status online';
+    if(isDemo)document.getElementById('demoBanner').style.display='block';
+    renderJournal();renderStats();
+  } catch(e) {
+    st.innerHTML='🔴 '+e.message;st.className='status error';
+    document.getElementById('recommendation').innerHTML='<div class="error-box">'+e.message+'</div>';
   }
 }
 
 function setAsset(a) {
-  currentAsset = a;
-  document.querySelectorAll('.gold-active, .silver-active').forEach(b => b.classList.remove('gold-active', 'silver-active', 'active'));
-  const btn = document.getElementById(a === 'gold' ? 'btn-gold' : 'btn-silver');
-  btn.classList.add('active', a === 'gold' ? 'gold-active' : 'silver-active');
+  currentAsset=a;
+  document.querySelectorAll('.gold-active,.silver-active').forEach(b=>b.classList.remove('gold-active','silver-active','active'));
+  const btn=document.getElementById(a==='gold'?'btn-gold':'btn-silver');
+  btn.classList.add('active',a==='gold'?'gold-active':'silver-active');
   loadData();
 }
 
 function setTF(tf) {
-  currentTF = tf;
-  document.querySelectorAll('.toolbar .btn').forEach(b => { if (['1h', '4h', '1d'].includes(b.textContent.replace(/[^1h4d]/g, ''))) b.classList.remove('active'); });
-  document.getElementById('btn-' + tf).classList.add('active');
+  currentTF=tf;
+  document.querySelectorAll('.toolbar .btn').forEach(b=>{if(Object.keys(TF_MAP).includes(b.id.replace('btn-','')))b.classList.remove('active');});
+  document.getElementById('btn-'+tf).classList.add('active');
   loadData();
-}
-
-function showTV() {
-  const tv = document.createElement('div');
-  tv.innerHTML = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;"><div style="width:100%;max-width:1000px;height:600px;background:#111827;border-radius:12px;overflow:hidden;" id="tv_chart"></div><button onclick="this.parentElement.remove()" style="margin-top:16px;padding:10px 24px;background:#ef4444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;">Закрыть</button></div>';
-  document.body.appendChild(tv);
-  new TradingView.widget({
-    width: '100%', height: '100%', symbol: currentAsset === 'gold' ? 'CAPITALCOM:GOLD' : 'CAPITALCOM:SILVER',
-    interval: currentTF === '1h' ? '60' : (currentTF === '4h' ? '240' : 'D'),
-    timezone: 'Europe/Moscow', theme: 'dark', style: '1', locale: 'ru',
-    toolbar_bg: '#111827', enable_publishing: false, hide_top_toolbar: false,
-    container_id: 'tv_chart', studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'BB@tv-basicstudies']
-  });
 }
 
 initCharts();
 loadData();
-setInterval(loadData, 300000);
+setInterval(loadData,300000);
 </script>
 </body>
 </html>
+

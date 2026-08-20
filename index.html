@@ -474,13 +474,13 @@ async function fetchData() {
   const a = ASSETS[currentAsset];
   const tf = TF_MAP[currentTF];
   try {
-    let d = await fetchBybit(a.bybit, tf.bybit, tf.limit);
+    const d = await fetchBybit(a.bybit, tf.bybit, tf.limit);
     isDemo = false;
     if (tf.slice) d = d.slice(-tf.slice);
     return d;
   } catch(e1) {
     try {
-      let d = await fetchOKX(a.okx, tf.okx, tf.limit);
+      const d = await fetchOKX(a.okx, tf.okx, tf.limit);
       isDemo = false;
       if (tf.slice) d = d.slice(-tf.slice);
       return d;
@@ -816,7 +816,7 @@ function renderStats() {
   document.getElementById('statWorst').textContent = (worst>=0?'+':'')+worst.toFixed(2)+'%';
   document.getElementById('statWorst').className = 'value down';
 
-  let equity = 100;
+  equity = 100;
   const eqData = [{time: trades.length?trades[0].entryTime:Date.now()/1000, value:100}];
   for (const t of trades.sort((a,b)=>a.entryTime-b.entryTime)) {
     const pnl = calcPnl(t);
@@ -963,12 +963,12 @@ async function fetchMTF() {
   const a = ASSETS[currentAsset];
   const tf = TF_MAP[mtf];
   try {
-    let d = await fetchBybit(a.bybit, tf.bybit, tf.limit);
+    const d = await fetchBybit(a.bybit, tf.bybit, tf.limit);
     if (tf.slice) d = d.slice(-tf.slice);
     mtfSignal = generateSignals(d);
   } catch(e) {
     try {
-      let d = await fetchOKX(a.okx, tf.okx, tf.limit);
+      const d = await fetchOKX(a.okx, tf.okx, tf.limit);
       if (tf.slice) d = d.slice(-tf.slice);
       mtfSignal = generateSignals(d);
     } catch(e2) {

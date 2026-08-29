@@ -372,7 +372,7 @@ function analyzeMarket(candles) {
   const vw = vwap(candles);
   const last = candles.length-1;
   const price = candles[last].close;
-  const spread = ((candles[last].high-candles[last].low)/price)*100);
+  const spread = ((candles[last].high-candles[last].low)/price)*100;
   const adxVal = adxv[last]||0;
   const bbWidth = bbv.width[last]||0;
   const aboveEma50 = price > (ema50v[last]||price);

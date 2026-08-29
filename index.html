@@ -72,6 +72,21 @@
   .checkbox-wrap{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:6px;cursor:pointer}
   .checkbox-wrap input{width:auto}
   .zoom-hint{position:absolute;bottom:8px;right:8px;font-size:10px;color:#475569;z-index:10;background:rgba(15,23,42,0.8);padding:3px 8px;border-radius:4px}
+
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px}
+  .calendar-day{background:#1e293b;border-radius:4px;padding:4px 2px;text-align:center;font-size:10px;cursor:pointer;transition:.2s;min-height:44px;display:flex;flex-direction:column;justify-content:center}
+  .calendar-day:hover{background:#334155;transform:scale(1.05)}
+  .calendar-day .date{color:#94a3b8;font-size:9px;margin-bottom:2px}
+  .calendar-day .pnl{font-size:11px;font-weight:700}
+  .calendar-day .count{font-size:9px;color:#64748b}
+  .calendar-day.pos{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2)}
+  .calendar-day.neg{background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.2)}
+  .calendar-day.neutral{border:1px solid #334155}
+  .calendar-header{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:9px;color:#64748b;margin-bottom:4px}
+  .day-detail{background:#1e293b;border-radius:6px;padding:8px;margin-top:8px;font-size:11px;display:none}
+  .day-detail.show{display:block}
+  .day-detail h4{color:#f59e0b;margin-bottom:6px;font-size:12px}
+
 </style>
 <base target="_blank">
 </head>
@@ -129,6 +144,18 @@
     <div class="section">
       <h3>📊 Статистика по стратегиям (%)</h3>
       <div id="strategyStats"></div>
+    <div class="section">
+      <h3>📅 Календарь по дням</h3>
+      <div class="calendar-header">
+        <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+      <div class="day-detail" id="dayDetail">
+        <h4 id="dayDetailTitle">Детали дня</h4>
+        <div id="dayDetailContent"></div>
+      </div>
+    </div>
+
     </div>
 
     <div class="section">
@@ -187,6 +214,30 @@ const CONFIG = {
 };
 
 // ==================== СОСТОЯНИЕ ====================
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('scalper_v3_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.stats) state.stats = parsed.stats;
+      if (parsed.strategyStats) state.strategyStats = parsed.strategyStats;
+      if (parsed.dailyStats) state.dailyStats = parsed.dailyStats;
+      if (parsed.history) state.history = parsed.history;
+    }
+  } catch(e) {}
+}
+function saveState() {
+  try {
+    localStorage.setItem('scalper_v3_state', JSON.stringify({
+      stats: state.stats,
+      strategyStats: state.strategyStats,
+      dailyStats: state.dailyStats,
+      history: state.history
+    }));
+  } catch(e) {}
+}
+
 let state = {
   symbol: 'PAXGUSDT', tf: '5m', connected: false, running: false,
   candles: {}, ticks: [],
@@ -202,6 +253,7 @@ let state = {
     BREAK:     {trades:0, wins:0, losses:0, pnl:0},
     PULLBACK:  {trades:0, wins:0, losses:0, pnl:0}
   },
+  dailyStats: {}, // "YYYY-MM-DD": {trades, wins, losses, pnl, history:[]}
   lastScan: 0,
   zoom: { scale: 1, offset: 0, dragging: false, dragStartX: 0, dragStartOffset: 0 },
   audioCtx: null
@@ -372,7 +424,7 @@ function analyzeMarket(candles) {
   const vw = vwap(candles);
   const last = candles.length-1;
   const price = candles[last].close;
-  const spread = ((candles[last].high-candles[last].low)/price)*100;
+  const spread = ((candles[last].high-candles[last].low)/price)*100);
   const adxVal = adxv[last]||0;
   const bbWidth = bbv.width[last]||0;
   const aboveEma50 = price > (ema50v[last]||price);
@@ -482,6 +534,13 @@ function closePosition(reason, exitPrice) {
   else { state.stats.losses++; state.strategyStats[pos.strategy].losses++; state.stats.streak.push('L'); }
   while (state.stats.streak.length > 15) state.stats.streak.shift();
   state.history.push({...pos, exit: exitPrice, pnl, reason, exitTime: Date.now()});
+  const dayKey = new Date().toISOString().slice(0,10);
+  if (!state.dailyStats[dayKey]) state.dailyStats[dayKey] = {trades:0, wins:0, losses:0, pnl:0, history:[]};
+  state.dailyStats[dayKey].trades++;
+  state.dailyStats[dayKey].pnl += pnl;
+  state.dailyStats[dayKey].history.push({...pos, exit: exitPrice, pnl, reason, exitTime: Date.now()});
+  if (isWin) state.dailyStats[dayKey].wins++; else state.dailyStats[dayKey].losses++;
+  saveState();
   state.tradeMarkers.push({
     type: 'exit', dir: pos.dir, price: exitPrice, pnl,
     time: Date.now(), reason,
@@ -869,6 +928,51 @@ function resetZoom() {
 }
 
 // ==================== UI ОБНОВЛЕНИЕ ====================
+
+function renderCalendar() {
+  const grid = $('calendarGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month+1, 0);
+  const startOffset = (firstDay.getDay()+6)%7; // Пн=0
+  for (let i=0;i<startOffset;i++) {
+    const empty = document.createElement('div');
+    grid.appendChild(empty);
+  }
+  for (let d=1; d<=lastDay.getDate(); d++) {
+    const date = new Date(year, month, d);
+    const key = date.toISOString().slice(0,10);
+    const dayData = state.dailyStats[key] || {trades:0, pnl:0};
+    const cell = document.createElement('div');
+    cell.className = 'calendar-day' + (dayData.pnl>0?' pos':(dayData.pnl<0?' neg':' neutral'));
+    cell.innerHTML = `<div class="date">${d}</div><div class="pnl ${dayData.pnl>=0?'pos':'neg'}">${dayData.pnl?dayData.pnl.toFixed(1)+'%':'—'}</div><div class="count">${dayData.trades>0?dayData.trades+' сд':'—'}</div>`;
+    cell.onclick = () => showDayDetail(key, dayData, d);
+    grid.appendChild(cell);
+  }
+}
+function showDayDetail(key, dayData, dayNum) {
+  const detail = $('dayDetail');
+  const title = $('dayDetailTitle');
+  const content = $('dayDetailContent');
+  if (!detail || !title || !content) return;
+  detail.className = 'day-detail show';
+  title.textContent = `${dayNum} ${new Date().toLocaleString('ru-RU',{month:'long'})} — ${dayData.trades||0} сделок, P&L ${(dayData.pnl||0).toFixed(2)}%`;
+  if (!dayData.history || dayData.history.length===0) {
+    content.innerHTML = '<div style="color:#64748b">Нет сделок</div>';
+    return;
+  }
+  let html = '';
+  dayData.history.forEach((h, i) => {
+    const pnlClass = h.pnl>=0?'pos':'neg';
+    html += `<div style="border-bottom:1px solid #334155;padding:4px 0"><span style="color:#94a3b8">#${i+1}</span> <b>${h.dir}</b> @ ${h.entry.toFixed(2)} → ${h.exit.toFixed(2)} <span class="${pnlClass}">${h.pnl>=0?'+':''}${h.pnl.toFixed(2)}%</span> <span style="color:#64748b;font-size:10px">${h.strategy}</span></div>`;
+  });
+  content.innerHTML = html;
+}
+
 function updateUI() {
   const s = state.stats;
   const total = s.total;
@@ -911,6 +1015,7 @@ function updateUI() {
   }
   $('sessionBadge').textContent = state.running ? (state.mode==='turbo'?'🔥 TURBO АКТИВЕН':'⚖️ БОТ АКТИВЕН') : 'СЕССИЯ: ОЖИДАНИЕ';
   $('sessionBadge').style.background = state.running ? '#059669' : '#7c3aed';
+  renderCalendar();
 }
 
 // ==================== УПРАВЛЕНИЕ ====================
@@ -994,6 +1099,7 @@ function getIntervalMs(tf) {
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', () => {
+  loadState();
   resizeCanvas();
   initZoom();
   updateUI();

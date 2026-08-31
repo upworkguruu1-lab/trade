@@ -101,6 +101,44 @@
   ::-webkit-scrollbar{width:6px}
   ::-webkit-scrollbar-track{background:#0f172a}
   ::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+
+  .signal-card{background:#1e293b;border:1px solid #334155;border-radius:6px;padding:8px;margin-bottom:6px;animation:slideIn 0.3s ease}
+  .signal-card.new{border-color:#f59e0b;box-shadow:0 0 8px rgba(245,158,11,0.2)}
+  @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+  .signal-card .sig-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+  .signal-card .sig-dir{font-size:12px;font-weight:700}
+  .signal-card .sig-dir.long{color:#00ff88}.signal-card .sig-dir.short{color:#ff3366}
+  .signal-card .sig-strat{font-size:10px;color:#94a3b8}
+  .signal-card .sig-prices{font-size:11px;color:#e2e8f0;margin:4px 0;line-height:1.6}
+  .signal-card .sig-prices span{color:#94a3b8}
+  .signal-card .sig-reason{font-size:10px;color:#64748b;margin-bottom:6px}
+  .sig-actions{display:flex;gap:4px}
+  .sig-actions button{flex:1;padding:5px;border:none;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;transition:.2s}
+  .sig-confirm{background:#059669;color:#fff}.sig-confirm:hover{background:#047857}
+  .sig-skip{background:#475569;color:#e2e8f0}.sig-skip:hover{background:#334155}
+  .user-pos-card{background:#1e293b;border-left:3px solid #f59e0b;border-radius:6px;padding:8px;margin-bottom:6px}
+  .user-pos-card.long{border-left-color:#00ff88}.user-pos-card.short{border-left-color:#ff3366}
+  .pos-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+  .pos-header .pos-name{font-size:12px;font-weight:700;color:#e2e8f0}
+  .pos-header .pos-pnl{font-size:14px;font-weight:800}
+  .pos-header .pos-pnl.pos{color:#00ff88}.pos-header .pos-pnl.neg{color:#ff3366}
+  .pos-details{font-size:10px;color:#94a3b8;line-height:1.6}
+  .pos-details b{color:#e2e8f0}
+  .sltp-track{height:4px;background:#334155;border-radius:2px;margin:6px 0;position:relative}
+  .sltp-track .sltp-fill{height:100%;border-radius:2px;background:#f59e0b;transition:width 0.5s}
+  .sltp-track .sltp-marker{position:absolute;top:-3px;width:6px;height:10px;border-radius:2px}
+  .sltp-track .sltp-marker.sl{background:#ff3366;left:0}.sltp-track .sltp-marker.tp{background:#00ff88;right:0}
+  .sltp-track .sltp-marker.entry{background:#f59e0b;left:50%;transform:translateX(-50%);width:8px;height:10px;border-radius:50%}
+  .pos-timer{font-size:10px;color:#64748b;text-align:right;margin-top:2px}
+  .pending-badge{background:#f59e0b;color:#000;font-size:10px;padding:1px 6px;border-radius:3px;font-weight:700}
+  .copy-section{background:#0f172a;border:1px solid #334155;border-radius:6px;padding:8px;margin-top:8px}
+  .copy-section h4{font-size:11px;color:#f59e0b;margin-bottom:6px}
+  .empty-state{text-align:center;color:#475569;font-size:11px;padding:12px 0}
+  .journal-pos-active{border-left:2px solid #f59e0b !important}
+  .journal-live-pnl{font-size:12px;font-weight:700;margin-left:28px}
+  .journal-live-pnl.pos{color:#00ff88}.journal-live-pnl.neg{color:#ff3366}
+  .journal-sltp{font-size:10px;color:#64748b;margin-left:28px;margin-top:2px}
+  .journal-timer{font-size:10px;color:#475569;margin-left:28px}
 </style>
 <base target="_blank">
 </head>
@@ -239,7 +277,23 @@
       <label class="checkbox-wrap"><input type="checkbox" id="usePullback" checked><span>PULLBACK</span></label>
     </div>
 
+    
     <div class="section">
+      <h3>🔄 Copy Trading</h3>
+      <label class="checkbox-wrap"><input type="checkbox" id="copyTradingEnabled"><span>Включить Copy Trading</span></label>
+      <label class="checkbox-wrap"><input type="checkbox" id="copyAutoConfirm"><span>Авто-подтверждение сигналов</span></label>
+
+      <div class="copy-section">
+        <h4>📡 Ожидающие сигналы <span class="pending-badge" id="pendingCount" style="display:none">0</span></h4>
+        <div id="pendingSignals"><div class="empty-state">Нет активных сигналов</div></div>
+      </div>
+
+      <div class="copy-section" style="margin-top:6px">
+        <h4>💼 Мои сделки <span id="activeUserPositions" style="color:#94a3b8;font-size:10px"></span></h4>
+        <div id="userPositionsPanel"><div class="empty-state">Нет открытых позиций</div></div>
+      </div>
+    </div>
+<div class="section">
       <button id="startBtn" class="action start" onclick="startBot()">▶ СТАРТ</button>
       <button id="stopBtn" class="action stop" onclick="stopBot()" disabled style="display:none">⏹ СТОП</button>
     </div>
@@ -296,7 +350,12 @@ let state = {
     timePatterns: {},
     slHistory: [], tpHistory: [],
     lastMarketState: null
-  }
+,
+  copyTrading: {
+    enabled: false, autoConfirm: false,
+    pendingSignals: [], userPositions: [],
+    signalHistory: [], maxSignals: 10
+  }  }
 };
 
 function loadState() {
@@ -309,6 +368,7 @@ function loadState() {
       if (p.dailyStats) state.dailyStats = p.dailyStats;
       if (p.history) state.history = p.history;
       if (p.ml) state.ml = {...state.ml, ...p.ml};
+      if (p.copyTrading) state.copyTrading = {...state.copyTrading, ...p.copyTrading};
     }
   } catch(e) {}
 }
@@ -316,7 +376,7 @@ function saveState() {
   try {
     localStorage.setItem('scalper_v4_state', JSON.stringify({
       stats: state.stats, strategyStats: state.strategyStats,
-      dailyStats: state.dailyStats, history: state.history, ml: state.ml
+      dailyStats: state.dailyStats, history: state.history, ml: state.ml, copyTrading: state.copyTrading
     }));
   } catch(e) {}
 }
@@ -525,9 +585,60 @@ function addJournalEntry(type,data){
   const div=document.createElement('div'); div.className='log-entry';
   div.style.borderLeft=type==='ENTRY'?'2px solid #00ff88':'2px solid #60a5fa';
   div.style.paddingLeft='6px'; div.style.marginBottom='4px';
-  if(type==='ENTRY'){ div.innerHTML=`<span class="log-time">${data.time}</span><span class="entry">▲ ВХОД ${data.dir}</span> @ ${data.entry.toFixed(2)}<br><span style="color:#94a3b8;margin-left:28px">${data.strategy} | SL ${data.sl.toFixed(2)} | TP ${data.tp.toFixed(2)}</span><br><span style="color:#64748b;margin-left:28px;font-size:10px">${data.reason}</span>`; }
-  else { const pnlClass=data.pnl>=0?'pnl-pos':'pnl-neg'; div.innerHTML=`<span class="log-time">${data.time}</span><span class="exit">▼ ВЫХОД ${data.dir}</span> @ ${data.exit.toFixed(2)}<br><span style="color:#94a3b8;margin-left:28px">${data.reason} | Стратегия: ${data.strategy}</span><br><span class="${pnlClass}" style="margin-left:28px;font-size:12px">P&L: ${data.pnl>=0?'+':''}${data.pnl.toFixed(2)}%</span>`; }
+  if(type==='ENTRY'){ 
+    div.innerHTML=`<span class="log-time">${data.time}</span><span class="entry">▲ ВХОД ${data.dir}</span> @ ${data.entry.toFixed(2)}<br><span style="color:#94a3b8;margin-left:28px">${data.strategy} | SL ${data.sl.toFixed(2)} | TP ${data.tp.toFixed(2)}</span><br><span style="color:#64748b;margin-left:28px;font-size:10px">${data.reason}</span>`; 
+    div.id = 'journal-entry-' + Date.now();
+    // If this is a user position entry, mark it
+    const ct = state.copyTrading;
+    const isUserPos = ct.userPositions.some(p => Math.abs(p.entry - data.entry) < 0.01 && p.dir === data.dir);
+    if(isUserPos) div.classList.add('journal-pos-active');
+  }
+  else { 
+    const pnlClass=data.pnl>=0?'pnl-pos':'pnl-neg'; 
+    div.innerHTML=`<span class="log-time">${data.time}</span><span class="exit">▼ ВЫХОД ${data.dir}</span> @ ${data.exit.toFixed(2)}<br><span style="color:#94a3b8;margin-left:28px">${data.reason} | Стратегия: ${data.strategy}</span><br><span class="${pnlClass}" style="margin-left:28px;font-size:12px">P&L: ${data.pnl>=0?'+':''}${data.pnl.toFixed(2)}%</span>`; 
+  }
   panel.insertBefore(div,panel.firstChild); while(panel.children.length>80)panel.removeChild(panel.lastChild);
+}
+
+function updateJournalLivePnl(){
+  const panel = $('journal'); if(!panel) return;
+  const candles = state.candles[state.tf];
+  if(!candles || candles.length === 0) return;
+  const price = candles[candles.length-1].close;
+  const lev = parseFloat($('leverage').value)||5;
+
+  // Update entries that have active user positions
+  const ct = state.copyTrading;
+  ct.userPositions.forEach(pos => {
+    const pnlRaw = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100 : (pos.entry-price)/pos.entry*100;
+    const pnl = pnlRaw * lev;
+    const elapsed = Math.floor((Date.now() - pos.entryTime)/1000);
+    const mins = Math.floor(elapsed/60), secs = elapsed%60;
+
+    // Find journal entries for this position and update them
+    const entries = panel.querySelectorAll('.journal-pos-active');
+    entries.forEach(entry => {
+      const text = entry.innerHTML;
+      if(text.includes(pos.dir) && text.includes(pos.entry.toFixed(2))){
+        // Check if we already have live P&L appended
+        if(!entry.querySelector('.journal-live-pnl')){
+          const liveDiv = document.createElement('div');
+          liveDiv.className = 'journal-live-pnl ' + (pnl>=0?'pos':'neg');
+          liveDiv.innerHTML = `📊 Live P&L: ${pnl>=0?'+':''}${pnl.toFixed(2)}% | ⏱ ${mins}м ${secs}с | Тек: ${price.toFixed(2)}`;
+          entry.appendChild(liveDiv);
+
+          const sltpDiv = document.createElement('div');
+          sltpDiv.className = 'journal-sltp';
+          sltpDiv.innerHTML = `SL: ${pos.sl.toFixed(2)} | TP: ${pos.tp.toFixed(2)} | До SL: ${pos.dir==='LONG'?((price-pos.sl)/price*100).toFixed(2):((pos.sl-price)/price*100).toFixed(2)}% | До TP: ${pos.dir==='LONG'?((pos.tp-price)/price*100).toFixed(2):((price-pos.tp)/price*100).toFixed(2)}%`;
+          entry.appendChild(sltpDiv);
+        } else {
+          const liveDiv = entry.querySelector('.journal-live-pnl');
+          liveDiv.className = 'journal-live-pnl ' + (pnl>=0?'pos':'neg');
+          liveDiv.innerHTML = `📊 Live P&L: ${pnl>=0?'+':''}${pnl.toFixed(2)}% | ⏱ ${mins}м ${secs}с | Тек: ${price.toFixed(2)}`;
+        }
+      }
+    });
+  });
 }
 
 function checkExit(price,candles){
@@ -553,7 +664,9 @@ function scan(){
   const last=candles[candles.length-1]; const analysis=analyzeMarket(candles);
   const mode=$('botMode').value; $('marketMode').textContent=analysis.mode; $('atrVal').textContent=analysis.atr?analysis.atr.toFixed(2):'--'; $('vwapVal').textContent=analysis.vwap?analysis.vwap.toFixed(2):'--'; $('spreadVal').textContent=analysis.spread?analysis.spread.toFixed(3)+'%':'--';
   log(`Сканирование... Режим:${analysis.mode} | ADX:${analysis.adx.toFixed(1)} | Спред:${analysis.spread.toFixed(3)}%`);
-  if(state.position){checkExit(last.close,candles);return;}
+  if(state.position){checkExit(last.close,candles);}
+  updateUserPositions();
+  updateJournalLivePnl();
   const useML=$('useML').checked;
   const adxMin=useML?state.ml.params.adxMin:15; const spreadMax=useML?state.ml.params.spreadMax:0.15;
   if(analysis.spread>spreadMax&&mode==='turbo'){log(`Сигнал заблокирован: спред ${analysis.spread.toFixed(3)}% > ${spreadMax.toFixed(2)}%`,'warn');return;}
@@ -571,8 +684,14 @@ function scan(){
   if(useML&&state.ml.warmUpDone){ for(const s of strategies){ const sc=scoreStrategy(s.strategy,analysis)*state.ml.params.strategyWeights[s.strategy]; if(sc>bestScore){bestScore=sc;best=s;} } }
   const atrVal=analysis.atr||(last.close*0.001); const slAtr=useML?state.ml.params.slMult:(parseFloat($('slAtr').value)||0.6); const tpAtr=useML?state.ml.params.tpMult:(parseFloat($('tpAtr').value)||1.8);
   let sl,tp; if(best.dir==='LONG'){sl=last.close-atrVal*slAtr;tp=last.close+atrVal*tpAtr;}else{sl=last.close+atrVal*slAtr;tp=last.close-atrVal*tpAtr;}
-  state.tradeMarkers.push({type:'entry',dir:best.dir,price:last.close,strategy:best.strategy,time:Date.now(),candleIdx:candles.length-1});
-  openPosition(best.dir,last.close,sl,tp,best.strategy,best.reason,analysis);
+  const signal = {dir:best.dir, entry:last.close, sl, tp, strategy:best.strategy, reason:best.reason, analysis, time:Date.now(), candleIdx:candles.length-1, confirmed:false};
+  if($('copyTradingEnabled').checked){
+    addPendingSignal(signal);
+    log(`📡 СИГНАЛ ${best.dir} @ ${last.close.toFixed(2)} | ${best.strategy} | Ожидает подтверждения`, 'warn');
+  } else {
+    state.tradeMarkers.push({type:'entry',dir:best.dir,price:last.close,strategy:best.strategy,time:Date.now(),candleIdx:candles.length-1});
+    openPosition(best.dir,last.close,sl,tp,best.strategy,best.reason,analysis);
+  }
 }
 
 function connectWS(){
@@ -583,7 +702,7 @@ function connectWS(){
       const k=msg.k; const candle={t:k.t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,quoteVolume:+k.q,closed:k.x};
       const arr=state.candles[state.tf]=state.candles[state.tf]||[]; const last=arr[arr.length-1];
       if(last&&last.t===candle.t)arr[arr.length-1]=candle; else if(!last||candle.t>last.t){arr.push(candle);if(arr.length>300)arr.shift();}
-      if(candle.closed)scan();
+      if(candle.closed){scan(); updateUserPositions(); updateJournalLivePnl();}
       $('lastPrice').textContent=candle.close.toFixed(2); const change=((candle.close-arr[0].open)/arr[0].open*100); const chEl=$('priceChange'); chEl.textContent=(change>=0?'+':'')+change.toFixed(2)+'%'; chEl.className=change>=0?'up':'down';
       drawChart();
     }
@@ -616,6 +735,18 @@ function drawChart(){
   for(let i=0;i<visible.length;i++){ const cnd=visible[i]; const cx=x(i); const vh=(cnd.volume/maxVol)*volH; ctx.fillStyle=cnd.close>=cnd.open?CONFIG.colors.volumeUp:CONFIG.colors.volumeDown; ctx.fillRect(cx-candleW/2,volY+volH-vh,candleW,vh); }
   const markers=state.tradeMarkers.filter(m=>m.candleIdx>=startIdx&&m.candleIdx<endIdx);
   for(const m of markers){ const mi=m.candleIdx-startIdx; const mx=x(mi); const my=y(m.price); if(m.type==='entry'){ ctx.fillStyle=m.dir==='LONG'?CONFIG.colors.green:CONFIG.colors.red; ctx.beginPath(); if(m.dir==='LONG'){ctx.moveTo(mx,my-12);ctx.lineTo(mx-6,my-4);ctx.lineTo(mx+6,my-4);}else{ctx.moveTo(mx,my+12);ctx.lineTo(mx-6,my+4);ctx.lineTo(mx+6,my+4);} ctx.fill(); ctx.fillStyle=CONFIG.colors.yellow; ctx.font=`${9*dpr}px sans-serif`; ctx.textAlign='center'; ctx.fillText(m.strategy,mx,m.dir==='LONG'?my-16:my+22); }else{ ctx.beginPath(); ctx.arc(mx,my,5,0,Math.PI*2); ctx.fillStyle=m.pnl>=0?CONFIG.colors.green:CONFIG.colors.red; ctx.fill(); ctx.fillStyle='#fff'; ctx.font=`${9*dpr}px sans-serif`; ctx.textAlign='center'; ctx.fillText((m.pnl>=0?'+':'')+m.pnl.toFixed(1)+'%',mx,my-10); } }
+  // Draw user position entry markers
+  state.copyTrading.userPositions.forEach(pos => {
+    const ci = state.candles[state.tf].length - 1;
+    if(ci >= startIdx && ci < endIdx){
+      const mx = x(ci - startIdx); const my = y(pos.entry);
+      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(padding.left, my); ctx.lineTo(w - padding.right, my); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(mx, my, 4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#f59e0b'; ctx.font = `bold ${9*dpr}px sans-serif`; ctx.textAlign = 'center';
+      ctx.fillText('YOU ' + pos.strategy, mx, my - 12);
+    }
+  });
   if(state.position){ const pos=state.position; const lastIdx=candles.length-1; if(lastIdx>=startIdx&&lastIdx<endIdx){ const px=x(lastIdx-startIdx); ctx.strokeStyle=CONFIG.colors.orange; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(padding.left,y(pos.entry)); ctx.lineTo(w-padding.right,y(pos.entry)); ctx.stroke(); ctx.setLineDash([]); ctx.strokeStyle=CONFIG.colors.red; ctx.beginPath(); ctx.moveTo(padding.left,y(pos.sl)); ctx.lineTo(w-padding.right,y(pos.sl)); ctx.stroke(); ctx.strokeStyle=CONFIG.colors.green; ctx.beginPath(); ctx.moveTo(padding.left,y(pos.tp)); ctx.lineTo(w-padding.right,y(pos.tp)); ctx.stroke(); const lev=parseFloat($('leverage').value)||5; const curPnl=pos.dir==='LONG'?(candles[lastIdx].close-pos.entry)/pos.entry*100*lev:(pos.entry-candles[lastIdx].close)/pos.entry*100*lev; ctx.fillStyle=curPnl>=0?CONFIG.colors.green:CONFIG.colors.red; ctx.font=`bold ${11*dpr}px sans-serif`; ctx.textAlign='left'; ctx.fillText(`P&L: ${curPnl>=0?'+':''}${curPnl.toFixed(2)}%`,padding.left+5,y(candles[lastIdx].close)-10); } }
 }
 
@@ -627,6 +758,196 @@ function initZoom(){
   window.addEventListener('mouseup',()=>{ state.zoom.dragging=false; c.style.cursor='crosshair'; });
 }
 function resetZoom(){ state.zoom.scale=1; state.zoom.offset=0; drawChart(); }
+
+
+/* ========== COPY TRADING FUNCTIONS ========== */
+function addPendingSignal(signal){
+  const ct = state.copyTrading;
+  ct.pendingSignals.push(signal);
+  if(ct.pendingSignals.length > ct.maxSignals) ct.pendingSignals.shift();
+  if($('copyAutoConfirm').checked){
+    setTimeout(()=>confirmSignal(ct.pendingSignals.length-1), 300);
+  }
+  renderPendingSignals();
+  playSound('warn');
+}
+
+function renderPendingSignals(){
+  const panel = $('pendingSignals'); if(!panel)return;
+  const ct = state.copyTrading;
+  if(ct.pendingSignals.length === 0){ panel.innerHTML = '<div class="empty-state">Нет активных сигналов</div>'; $('pendingCount').style.display='none'; return; }
+  $('pendingCount').style.display='inline'; $('pendingCount').textContent = ct.pendingSignals.length;
+  panel.innerHTML = '';
+  ct.pendingSignals.forEach((sig, idx) => {
+    const div = document.createElement('div'); div.className = 'signal-card new';
+    const dirColor = sig.dir === 'LONG' ? 'long' : 'short';
+    div.innerHTML = `
+      <div class="sig-header"><span class="sig-dir ${dirColor}">▲ ${sig.dir}</span><span class="sig-strat">${sig.strategy}</span></div>
+      <div class="sig-prices"><span>Вход:</span> ${sig.entry.toFixed(2)} | <span>SL:</span> ${sig.sl.toFixed(2)} | <span>TP:</span> ${sig.tp.toFixed(2)}</div>
+      <div class="sig-reason">${sig.reason}</div>
+      <div class="sig-actions">
+        <button class="sig-confirm" onclick="confirmSignal(${idx})">✅ Копировать</button>
+        <button class="sig-skip" onclick="skipSignal(${idx})">❌ Пропустить</button>
+      </div>`;
+    panel.appendChild(div);
+    setTimeout(()=>div.classList.remove('new'), 1000);
+  });
+}
+
+function confirmSignal(idx){
+  const ct = state.copyTrading;
+  if(idx < 0 || idx >= ct.pendingSignals.length) return;
+  const sig = ct.pendingSignals[idx];
+  sig.confirmed = true; sig.confirmTime = Date.now();
+  ct.userPositions.push({
+    dir: sig.dir, entry: sig.entry, sl: sig.sl, tp: sig.tp,
+    strategy: sig.strategy, reason: sig.reason, analysis: sig.analysis,
+    entryTime: Date.now(), maxProfit: 0, layer1Done: false, layer2Done: false
+  });
+  ct.signalHistory.push({...sig, action:'confirmed', confirmTime: Date.now()});
+  ct.pendingSignals.splice(idx, 1);
+  log(`✅ Пользователь скопировал ${sig.dir} @ ${sig.entry.toFixed(2)} | ${sig.strategy}`, 'entry');
+  playSound('entry');
+  renderPendingSignals();
+  renderUserPositions();
+  saveState();
+}
+
+function skipSignal(idx){
+  const ct = state.copyTrading;
+  if(idx < 0 || idx >= ct.pendingSignals.length) return;
+  const sig = ct.pendingSignals[idx];
+  ct.signalHistory.push({...sig, action:'skipped', skipTime: Date.now()});
+  ct.pendingSignals.splice(idx, 1);
+  log(`❌ Пользователь пропустил ${sig.dir} @ ${sig.entry.toFixed(2)} | ${sig.strategy}`, 'warn');
+  renderPendingSignals();
+  saveState();
+}
+
+function renderUserPositions(){
+  const panel = $('userPositionsPanel'); if(!panel)return;
+  const ct = state.copyTrading;
+  const candles = state.candles[state.tf];
+  const price = candles && candles.length ? candles[candles.length-1].close : null;
+
+  if(ct.userPositions.length === 0){ 
+    panel.innerHTML = '<div class="empty-state">Нет открытых позиций</div>'; 
+    $('activeUserPositions').textContent = ''; return; 
+  }
+  $('activeUserPositions').textContent = `(${ct.userPositions.length} активных)`;
+  panel.innerHTML = '';
+
+  ct.userPositions.forEach((pos, idx) => {
+    const div = document.createElement('div'); div.className = 'user-pos-card ' + (pos.dir==='LONG'?'long':'short');
+    const lev = parseFloat($('leverage').value)||5;
+    let pnl = 0, pnlRaw = 0;
+    if(price){
+      pnlRaw = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100 : (pos.entry-price)/pos.entry*100;
+      pnl = pnlRaw * lev;
+    }
+    const elapsed = Math.floor((Date.now() - pos.entryTime)/1000);
+    const mins = Math.floor(elapsed/60), secs = elapsed%60;
+
+    // SLTP track
+    const slDist = Math.abs(pos.entry - pos.sl);
+    const tpDist = Math.abs(pos.tp - pos.entry);
+    const totalRange = slDist + tpDist;
+    let progress = 50;
+    if(totalRange > 0 && price){
+      const curDist = pos.dir==='LONG' ? (price - pos.sl) : (pos.sl - price);
+      progress = Math.max(0, Math.min(100, (curDist / totalRange) * 100));
+    }
+
+    div.innerHTML = `
+      <div class="pos-header">
+        <span class="pos-name">${pos.dir} | ${pos.strategy}</span>
+        <span class="pos-pnl ${pnl>=0?'pos':'neg'}">${pnl>=0?'+':''}${pnl.toFixed(2)}%</span>
+      </div>
+      <div class="pos-details">
+        <b>Вход:</b> ${pos.entry.toFixed(2)} | <b>Тек:</b> ${price ? price.toFixed(2) : '--'} | <b>SL:</b> ${pos.sl.toFixed(2)} | <b>TP:</b> ${pos.tp.toFixed(2)}
+      </div>
+      <div class="sltp-track">
+        <div class="sltp-fill" style="width:${progress}%"></div>
+        <div class="sltp-marker sl" title="SL: ${pos.sl.toFixed(2)}"></div>
+        <div class="sltp-marker tp" title="TP: ${pos.tp.toFixed(2)}"></div>
+        <div class="sltp-marker entry" title="Entry: ${pos.entry.toFixed(2)}" style="left:${progress}%"></div>
+      </div>
+      <div class="pos-timer">⏱ ${mins}м ${secs}с в сделке | <button onclick="closeUserPosition(${idx})" style="background:#dc2626;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:10px;cursor:pointer">Закрыть</button></div>`;
+    panel.appendChild(div);
+  });
+}
+
+function closeUserPosition(idx){
+  const ct = state.copyTrading;
+  if(idx < 0 || idx >= ct.userPositions.length) return;
+  const pos = ct.userPositions[idx];
+  const candles = state.candles[state.tf];
+  const price = candles && candles.length ? candles[candles.length-1].close : pos.entry;
+  const lev = parseFloat($('leverage').value)||5;
+  const pnl = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100*lev : (pos.entry-price)/pos.entry*100*lev;
+  const isWin = pnl > 0;
+
+  // Add to journal
+  addJournalEntry('EXIT', {dir:pos.dir, entry:pos.entry, exit:price, pnl, strategy:pos.strategy, reason:'Ручное закрытие', time:new Date().toLocaleTimeString('ru-RU')});
+
+  ct.signalHistory.push({...pos, action:'closed', exit:price, pnl, closeTime: Date.now()});
+  ct.userPositions.splice(idx, 1);
+  log(`💼 Пользователь закрыл ${pos.dir} @ ${price.toFixed(2)} | P&L ${pnl>=0?'+':''}${pnl.toFixed(2)}%`, isWin?'tp':'sl');
+  playSound(isWin?'exit':'sl');
+  renderUserPositions();
+  updateUI();
+  saveState();
+}
+
+function updateUserPositions(){
+  const ct = state.copyTrading;
+  const candles = state.candles[state.tf];
+  if(!candles || candles.length === 0 || ct.userPositions.length === 0) return;
+  const price = candles[candles.length-1].close;
+  const lev = parseFloat($('leverage').value)||5;
+
+  ct.userPositions.forEach(pos => {
+    const pnlRaw = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100 : (pos.entry-price)/pos.entry*100;
+    const pnl = pnlRaw * lev;
+    if(pnl > pos.maxProfit) pos.maxProfit = pnl;
+
+    // Check SL
+    if(pos.dir==='LONG' && price <= pos.sl){ closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'STOP LOSS'); return; }
+    if(pos.dir==='SHORT' && price >= pos.sl){ closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'STOP LOSS'); return; }
+    // Check TP
+    if(pos.dir==='LONG' && price >= pos.tp){ closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'TAKE PROFIT'); return; }
+    if(pos.dir==='SHORT' && price <= pos.tp){ closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'TAKE PROFIT'); return; }
+
+    // Smart exit on reversal
+    const atrv = atr(candles, 14);
+    const atrVal = atrv[atrv.length-1] || (price*0.001);
+    if(pos.maxProfit > 0.3 && pnl < pos.maxProfit - (0.35*atrVal/pos.entry*100*lev)){
+      closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'Smart Exit');
+      return;
+    }
+  });
+  renderUserPositions();
+}
+
+function closeUserPositionBySLTP(idx, price, reason){
+  const ct = state.copyTrading;
+  if(idx < 0 || idx >= ct.userPositions.length) return;
+  const pos = ct.userPositions[idx];
+  const lev = parseFloat($('leverage').value)||5;
+  const pnl = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100*lev : (pos.entry-price)/pos.entry*100*lev;
+  const isWin = pnl > 0;
+
+  addJournalEntry('EXIT', {dir:pos.dir, entry:pos.entry, exit:price, pnl, strategy:pos.strategy, reason, time:new Date().toLocaleTimeString('ru-RU')});
+  ct.signalHistory.push({...pos, action:'closed', exit:price, pnl, reason, closeTime: Date.now()});
+  ct.userPositions.splice(idx, 1);
+  log(`💼 ${reason} | ${pos.dir} @ ${price.toFixed(2)} | P&L ${pnl>=0?'+':''}${pnl.toFixed(2)}%`, isWin?'tp':'sl');
+  playSound(isWin?'exit':'sl');
+  renderUserPositions();
+  updateUI();
+  saveState();
+}
+
+/* ========== END COPY TRADING ========== */
 
 function updateUI(){
   const s=state.stats; const total=s.total; const wins=s.wins; const losses=s.losses; const wr=total>0?(wins/total*100).toFixed(1):'0.0';
@@ -642,7 +963,7 @@ function updateUI(){
   }
   $('sessionBadge').textContent=state.running?(state.mode==='turbo'?'🔥 TURBO АКТИВЕН':'⚖️ БОТ АКТИВЕН'):'СЕССИЯ: ОЖИДАНИЕ';
   $('sessionBadge').style.background=state.running?'#059669':'#7c3aed';
-  renderCalendar(); updateMLPanel();
+  renderCalendar(); updateMLPanel(); renderUserPositions();
 }
 
 function changeMonth(delta){
@@ -724,8 +1045,16 @@ function getIntervalMs(tf){ const map={'1m':60000,'5m':300000,'15m':900000,'1h':
 
 document.addEventListener('DOMContentLoaded',()=>{
   loadState(); resizeCanvas(); initZoom(); updateUI();
+  // Restore copy trading settings
+  if(state.copyTrading.enabled) $('copyTradingEnabled').checked = true;
+  if(state.copyTrading.autoConfirm) $('copyAutoConfirm').checked = true;
   window.addEventListener('resize',resizeCanvas);
   setInterval(()=>{ const now=new Date(); $('clock').textContent=now.toLocaleTimeString('ru-RU',{hour12:false})+' UTC'; },1000);
+  // Live update interval for user positions and journal
+  setInterval(()=>{ if(state.running || state.copyTrading.userPositions.length>0){ updateUserPositions(); updateJournalLivePnl(); } }, 2000);
+  // Copy trading checkbox listeners
+  $('copyTradingEnabled').addEventListener('change', (e)=>{ state.copyTrading.enabled = e.target.checked; saveState(); log(e.target.checked ? '🔄 Copy Trading ВКЛЮЧЕН' : '🔄 Copy Trading ВЫКЛЮЧЕН'); });
+  $('copyAutoConfirm').addEventListener('change', (e)=>{ state.copyTrading.autoConfirm = e.target.checked; saveState(); log(e.target.checked ? '✅ Авто-подтверждение ВКЛЮЧЕНО' : '⏸ Авто-подтверждение ВЫКЛЮЧЕНО'); });
   fetchKlines('PAXGUSDT','5m',100).then(data=>{ if(data){ state.candles['5m']=data; $('dataBadge').textContent='РЕАЛЬНЫЕ ДАННЫЕ'; $('dataBadge').className='badge badge-live'; drawChart(); } });
 });
 </script>

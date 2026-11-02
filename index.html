@@ -1,1062 +1,535 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scalping Terminal TURBO v4.0 — ML Edition</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#0a0e17;color:#e0e6ed;font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden;height:100vh}
-  .header{height:44px;background:#111827;border-bottom:1px solid #1f2937;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
-  .header h1{font-size:14px;font-weight:700;color:#f59e0b;letter-spacing:1px}
-  .badge{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700}
-  .badge-live{background:#059669;color:#fff}
-  .badge-demo{background:#dc2626;color:#fff}
-  .badge-ws{background:#2563eb;color:#fff}
-  .badge-ml{background:#7c3aed;color:#fff}
-  .main{display:flex;height:calc(100vh - 44px)}
-  .left{flex:1;display:flex;flex-direction:column;min-width:0}
-  .chart-wrap{flex:1;position:relative;background:#0f172a;border-bottom:1px solid #1f2937}
-  #chart{cursor:crosshair;width:100%;height:100%;display:block}
-  .chart-toolbar{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:10}
-  .chart-toolbar button{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:4px 10px;font-size:11px;border-radius:4px;cursor:pointer;transition:.2s}
-  .chart-toolbar button:hover{background:#334155;color:#e2e8f0}
-  .chart-toolbar button.active{background:#f59e0b;color:#000;border-color:#f59e0b}
-  .chart-info{position:absolute;top:8px;left:8px;font-size:11px;color:#94a3b8;z-index:10;background:rgba(15,23,42,0.85);padding:6px 10px;border-radius:6px;line-height:1.6}
-  .chart-info .price{font-size:16px;font-weight:700;color:#e2e8f0}
-  .chart-info .up{color:#00ff88}.chart-info .down{color:#ff3366}
-  .bottom{height:200px;background:#111827;display:flex;gap:1px}
-  .panel{flex:1;background:#0f172a;padding:10px;overflow-y:auto;font-size:11px;line-height:1.5}
-  .panel h3{font-size:12px;color:#f59e0b;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1f2937;padding-bottom:4px}
-  .right{width:360px;background:#111827;border-left:1px solid #1f2937;display:flex;flex-direction:column;overflow-y:auto}
-  .section{padding:10px;border-bottom:1px solid #1f2937}
-  .section h3{font-size:12px;color:#f59e0b;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
-  .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:12px}
-  .row label{color:#94a3b8}.row span{color:#e2e8f0;font-weight:600}
-  .row .pos{color:#00ff88}.row .neg{color:#ff3366}
-  select,input{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:5px 8px;border-radius:4px;font-size:12px;width:140px}
-  button.action{width:100%;padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;transition:.2s}
-  button.start{background:#059669;color:#fff}button.start:hover{background:#047857}
-  button.stop{background:#dc2626;color:#fff}button.stop:hover{background:#b91c1c}
-  button.train{background:#7c3aed;color:#fff}button.train:hover{background:#6d28d9}
-  button:disabled{opacity:.5;cursor:not-allowed}
-  .log-entry{padding:4px 0;border-bottom:1px solid #1f2937;font-size:11px}
-  .log-time{color:#64748b;font-size:10px;margin-right:6px}
-  .log-entry .entry{color:#00ff88;font-weight:700}
-  .log-entry .exit{color:#60a5fa;font-weight:700}
-  .log-entry .sl{color:#ff3366}
-  .log-entry .tp{color:#00ff88}
-  .log-entry .pnl-pos{color:#00ff88;font-weight:700}
-  .log-entry .pnl-neg{color:#ff3366;font-weight:700}
-  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .stat-box{background:#1e293b;border-radius:6px;padding:8px;text-align:center}
-  .stat-box .name{font-size:10px;color:#94a3b8;text-transform:uppercase}
-  .stat-box .val{font-size:14px;font-weight:700;margin-top:2px}
-  .strategy-card{background:#1e293b;border-radius:6px;padding:8px;margin-bottom:6px;border-left:3px solid #334155}
-  .strategy-card.active{border-left-color:#f59e0b}
-  .strategy-card .name{font-size:11px;font-weight:700;color:#e2e8f0}
-  .strategy-card .stats{font-size:10px;color:#94a3b8;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
-  .strategy-card .stats span.pos{color:#00ff88}.strategy-card .stats span.neg{color:#ff3366}
-  .pnl-live{font-size:22px;font-weight:800;text-align:center;padding:8px;border-radius:8px;background:#1e293b;margin:6px 0}
-  .pnl-live.pos{color:#00ff88}.pnl-live.neg{color:#ff3366}
-  .streak{display:flex;justify-content:center;gap:4px;margin-top:6px}
-  .streak-dot{width:8px;height:8px;border-radius:50%;background:#334155}
-  .streak-dot.win{background:#00ff88}.streak-dot.loss{background:#ff3366}
-  .calendar-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-  .calendar-nav button{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px}
-  .calendar-nav button:hover{background:#334155}
-  .calendar-nav .month-title{font-size:13px;font-weight:700;color:#f59e0b;text-transform:capitalize}
-  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:4px}
-  .calendar-day{background:#1e293b;border-radius:4px;padding:4px 2px;text-align:center;font-size:10px;cursor:pointer;transition:.2s;min-height:40px;display:flex;flex-direction:column;justify-content:center}
-  .calendar-day:hover{background:#334155;transform:scale(1.05)}
-  .calendar-day .date{color:#94a3b8;font-size:9px;margin-bottom:2px}
-  .calendar-day .pnl{font-size:11px;font-weight:700}
-  .calendar-day .count{font-size:9px;color:#64748b}
-  .calendar-day.pos{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2)}
-  .calendar-day.neg{background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.2)}
-  .calendar-day.neutral{border:1px solid #334155}
-  .calendar-header{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:9px;color:#64748b;margin-bottom:4px}
-  .month-summary{background:#1e293b;border-radius:6px;padding:8px;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
-  .month-summary .sum-box{text-align:center;padding:4px}
-  .month-summary .sum-label{font-size:9px;color:#94a3b8;text-transform:uppercase}
-  .month-summary .sum-val{font-size:13px;font-weight:700}
-  .day-detail{background:#1e293b;border-radius:6px;padding:8px;margin-top:8px;font-size:11px;display:none}
-  .day-detail.show{display:block}
-  .day-detail h4{color:#f59e0b;margin-bottom:6px;font-size:12px}
-  .ml-panel{background:#0f172a;border:1px solid #7c3aed;border-radius:6px;padding:8px;margin-top:8px}
-  .ml-panel h4{font-size:11px;color:#a855f7;margin-bottom:6px}
-  .ml-param{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
-  .ml-param span{color:#94a3b8}
-  .ml-param b{color:#e2e8f0}
-  .progress-bar{background:#1e293b;height:6px;border-radius:3px;margin-top:4px;overflow:hidden}
-  .progress-bar .fill{height:100%;background:#7c3aed;border-radius:3px;transition:width .3s}
-  .checkbox-wrap{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:6px;cursor:pointer}
-  .checkbox-wrap input{width:auto}
-  .zoom-hint{position:absolute;bottom:8px;right:8px;font-size:10px;color:#475569;z-index:10;background:rgba(15,23,42,0.8);padding:3px 8px;border-radius:4px}
-  .tab-bar{display:flex;gap:2px;margin-bottom:8px}
-  .tab-bar button{flex:1;background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:5px;font-size:11px;border-radius:4px;cursor:pointer}
-  .tab-bar button.active{background:#f59e0b;color:#000;border-color:#f59e0b;font-weight:700}
-  .tab-content{display:none}
-  .tab-content.active{display:block}
-  ::-webkit-scrollbar{width:6px}
-  ::-webkit-scrollbar-track{background:#0f172a}
-  ::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
-
-  .signal-card{background:#1e293b;border:1px solid #334155;border-radius:6px;padding:8px;margin-bottom:6px;animation:slideIn 0.3s ease}
-  .signal-card.new{border-color:#f59e0b;box-shadow:0 0 8px rgba(245,158,11,0.2)}
-  @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-  .signal-card .sig-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-  .signal-card .sig-dir{font-size:12px;font-weight:700}
-  .signal-card .sig-dir.long{color:#00ff88}.signal-card .sig-dir.short{color:#ff3366}
-  .signal-card .sig-strat{font-size:10px;color:#94a3b8}
-  .signal-card .sig-prices{font-size:11px;color:#e2e8f0;margin:4px 0;line-height:1.6}
-  .signal-card .sig-prices span{color:#94a3b8}
-  .signal-card .sig-reason{font-size:10px;color:#64748b;margin-bottom:6px}
-  .sig-actions{display:flex;gap:4px}
-  .sig-actions button{flex:1;padding:5px;border:none;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;transition:.2s}
-  .sig-confirm{background:#059669;color:#fff}.sig-confirm:hover{background:#047857}
-  .sig-skip{background:#475569;color:#e2e8f0}.sig-skip:hover{background:#334155}
-  .user-pos-card{background:#1e293b;border-left:3px solid #f59e0b;border-radius:6px;padding:8px;margin-bottom:6px}
-  .user-pos-card.long{border-left-color:#00ff88}.user-pos-card.short{border-left-color:#ff3366}
-  .pos-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-  .pos-header .pos-name{font-size:12px;font-weight:700;color:#e2e8f0}
-  .pos-header .pos-pnl{font-size:14px;font-weight:800}
-  .pos-header .pos-pnl.pos{color:#00ff88}.pos-header .pos-pnl.neg{color:#ff3366}
-  .pos-details{font-size:10px;color:#94a3b8;line-height:1.6}
-  .pos-details b{color:#e2e8f0}
-  .sltp-track{height:4px;background:#334155;border-radius:2px;margin:6px 0;position:relative}
-  .sltp-track .sltp-fill{height:100%;border-radius:2px;background:#f59e0b;transition:width 0.5s}
-  .sltp-track .sltp-marker{position:absolute;top:-3px;width:6px;height:10px;border-radius:2px}
-  .sltp-track .sltp-marker.sl{background:#ff3366;left:0}.sltp-track .sltp-marker.tp{background:#00ff88;right:0}
-  .sltp-track .sltp-marker.entry{background:#f59e0b;left:50%;transform:translateX(-50%);width:8px;height:10px;border-radius:50%}
-  .pos-timer{font-size:10px;color:#64748b;text-align:right;margin-top:2px}
-  .pending-badge{background:#f59e0b;color:#000;font-size:10px;padding:1px 6px;border-radius:3px;font-weight:700}
-  .copy-section{background:#0f172a;border:1px solid #334155;border-radius:6px;padding:8px;margin-top:8px}
-  .copy-section h4{font-size:11px;color:#f59e0b;margin-bottom:6px}
-  .empty-state{text-align:center;color:#475569;font-size:11px;padding:12px 0}
-  .journal-pos-active{border-left:2px solid #f59e0b !important}
-  .journal-live-pnl{font-size:12px;font-weight:700;margin-left:28px}
-  .journal-live-pnl.pos{color:#00ff88}.journal-live-pnl.neg{color:#ff3366}
-  .journal-sltp{font-size:10px;color:#64748b;margin-left:28px;margin-top:2px}
-  .journal-timer{font-size:10px;color:#475569;margin-left:28px}
-</style>
-<base target="_blank">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRouter AI Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
 </head>
 <body>
+    <div id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <span>AI Hub</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-label">Режимы</div>
+                    <button class="nav-item active" data-tab="chat">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span>Чат</span>
+                    </button>
+                    <button class="nav-item" data-tab="code">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="16 18 22 12 16 6"/>
+                            <polyline points="8 6 2 12 8 18"/>
+                        </svg>
+                        <span>Код</span>
+                    </button>
+                    <button class="nav-item" data-tab="multimodal">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21"/>
+                        </svg>
+                        <span>Мультимодал</span>
+                    </button>
+                    <button class="nav-item" data-tab="audio">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="23"/>
+                            <line x1="8" y1="23" x2="16" y2="23"/>
+                        </svg>
+                        <span>Аудио</span>
+                    </button>
+                    <button class="nav-item" data-tab="agent">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                        <span>Агент</span>
+                    </button>
+                    <button class="nav-item" data-tab="rag">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        <span>RAG / Документы</span>
+                    </button>
+                    <button class="nav-item" data-tab="compare">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="9" height="9"/>
+                            <rect x="14" y="3" width="9" height="9"/>
+                            <rect x="14" y="14" width="9" height="9"/>
+                            <rect x="3" y="14" width="9" height="9"/>
+                        </svg>
+                        <span>Сравнение</span>
+                    </button>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-label">История</div>
+                    <div id="chatHistory" class="chat-history">
+                        <!-- History items will be added here -->
+                    </div>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-label">Система</div>
+                    <button class="nav-item" data-tab="settings">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        <span>Настройки</span>
+                    </button>
+                </div>
+            </nav>
+        </aside>
 
-<div class="header">
-  <h1>⚡ SCALPING TERMINAL TURBO v4.0</h1>
-  <span id="wsBadge" class="badge badge-ws">WS ○</span>
-  <span id="dataBadge" class="badge badge-demo">ДЕМО</span>
-  <span id="mlBadge" class="badge badge-ml">ML: ОЖИДАНИЕ</span>
-  <span id="sessionBadge" class="badge" style="background:#475569;color:#fff">СТОП</span>
-  <span style="margin-left:auto;font-size:11px;color:#64748b" id="clock">--:--:--</span>
-</div>
-<div class="main">
-  <div class="left">
-    <div class="chart-wrap">
-      <canvas id="chart"></canvas>
-      <div class="chart-toolbar">
-        <button id="tf1m" onclick="setTF('1m')">1м</button>
-        <button id="tf5m" class="active" onclick="setTF('5m')">5м</button>
-        <button id="tf15m" onclick="setTF('15m')">15м</button>
-        <button id="tf1h" onclick="setTF('1h')">1ч</button>
-        <button onclick="resetZoom()">⟲</button>
-      </div>
-      <div class="chart-info" id="chartInfo">
-        <div class="price" id="lastPrice">----.--</div>
-        <div>Изм: <span id="priceChange">0.00%</span></div>
-        <div>ATR: <span id="atrVal">--</span></div>
-        <div>VWAP: <span id="vwapVal">--</span></div>
-        <div>Режим: <span id="marketMode">--</span></div>
-        <div>Спред: <span id="spreadVal">--</span></div>
-      </div>
-      <div class="zoom-hint">🖱 Колесико — зум | Drag — сдвиг</div>
-    </div>
-    <div class="bottom">
-      <div class="panel" id="journalPanel">
-        <h3>📋 Журнал сделок</h3>
-        <div id="journal"></div>
-      </div>
-      <div class="panel" id="logPanel">
-        <h3>📡 Лог бота</h3>
-        <div id="log"></div>
-      </div>
-    </div>
-  </div>
-  <div class="right">
-    <div class="section">
-      <h3>💰 Сессия</h3>
-      <div class="pnl-live" id="sessionPnl">0.00%</div>
-      <div class="row"><label>Сделок:</label><span id="totalTrades">0</span></div>
-      <div class="row"><label>Побед:</label><span class="pos" id="winTrades">0</span></div>
-      <div class="row"><label>Поражений:</label><span class="neg" id="lossTrades">0</span></div>
-      <div class="row"><label>Win Rate:</label><span id="winRate">0%</span></div>
-      <div class="streak" id="streakBox"></div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-bar">
+                <button class="menu-btn" id="menuBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <h1 class="page-title" id="pageTitle">Чат</h1>
+                <div class="top-actions">
+                    <button class="icon-btn" id="newChatBtn" title="Новый чат">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" id="exportBtn" title="Экспорт">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <div class="model-selector" id="modelSelector">
+                        <button class="model-select-btn" id="modelSelectBtn">
+                            <span id="currentModel">Выберите модель</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </button>
+                        <div class="model-dropdown" id="modelDropdown">
+                            <div class="model-search">
+                                <input type="text" placeholder="Поиск модели..." id="modelSearch">
+                            </div>
+                            <div class="model-list" id="modelList"></div>
+                            <button class="add-model-btn" id="addModelBtn">+ Добавить модель</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tab: Chat -->
+            <div class="tab-content active" id="tab-chat">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-area">
+                        <div class="input-toolbar">
+                            <button class="tool-btn" id="attachFileBtn" title="Прикрепить файл">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                </svg>
+                            </button>
+                            <button class="tool-btn" id="webSearchBtn" title="Поиск в интернете">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                            </button>
+                            <div class="attached-files" id="attachedFiles"></div>
+                        </div>
+                        <div class="input-wrapper">
+                            <textarea class="chat-input" id="chatInput" placeholder="Введите сообщение..." rows="1"></textarea>
+                            <button class="send-btn" id="sendBtn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Code -->
+            <div class="tab-content" id="tab-code">
+                <div class="code-container">
+                    <div class="code-header">
+                        <select class="lang-select" id="codeLang">
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="bash">Bash</option>
+                            <option value="cpp">C++</option>
+                            <option value="go">Go</option>
+                            <option value="rust">Rust</option>
+                        </select>
+                        <button class="run-btn" id="runCodeBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            Запустить
+                        </button>
+                    </div>
+                    <div class="code-layout">
+                        <div class="code-editor-wrapper">
+                            <div class="code-messages" id="codeMessages"></div>
+                            <div class="code-input-area">
+                                <textarea class="code-input" id="codeInput" placeholder="Опишите задачу или вставьте код для исправления..."></textarea>
+                                <button class="send-btn" id="sendCodeBtn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="22" y1="2" x2="11" y2="13"/>
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="code-output" id="codeOutput">
+                            <div class="output-header">Вывод</div>
+                            <pre class="output-content" id="outputContent"><code>// Нажмите "Запустить" для выполнения кода</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Multimodal -->
+            <div class="tab-content" id="tab-multimodal">
+                <div class="multimodal-container">
+                    <div class="mm-upload-area" id="mmUploadArea">
+                        <div class="mm-upload-placeholder">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <path d="M21 15l-5-5L5 21"/>
+                            </svg>
+                            <p>Перетащите изображения сюда или нажмите для выбора</p>
+                            <input type="file" id="mmFileInput" accept="image/*,application/pdf" multiple hidden>
+                        </div>
+                    </div>
+                    <div class="mm-gallery" id="mmGallery"></div>
+                    <div class="mm-chat">
+                        <div class="mm-messages" id="mmMessages"></div>
+                        <div class="mm-input-area">
+                            <textarea class="mm-input" id="mmInput" placeholder="Опишите изображение или задайте вопрос..."></textarea>
+                            <button class="send-btn" id="sendMmBtn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Audio -->
+            <div class="tab-content" id="tab-audio">
+                <div class="audio-container">
+                    <div class="audio-modes">
+                        <button class="audio-mode active" data-mode="tts">Text to Speech</button>
+                        <button class="audio-mode" data-mode="stt">Speech to Text</button>
+                    </div>
+                    
+                    <div class="audio-panel active" id="ttsPanel">
+                        <div class="audio-input-area">
+                            <textarea class="audio-input" id="ttsInput" placeholder="Введите текст для озвучки..."></textarea>
+                            <div class="audio-controls">
+                                <select id="ttsVoice">
+                                    <option value="alloy">Alloy</option>
+                                    <option value="echo">Echo</option>
+                                    <option value="fable">Fable</option>
+                                    <option value="onyx">Onyx</option>
+                                    <option value="nova">Nova</option>
+                                    <option value="shimmer">Shimmer</option>
+                                </select>
+                                <button class="primary-btn" id="generateAudioBtn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                                    </svg>
+                                    Сгенерировать
+                                </button>
+                            </div>
+                        </div>
+                        <div class="audio-player-wrapper" id="audioPlayerWrapper">
+                            <audio id="audioPlayer" controls></audio>
+                        </div>
+                    </div>
+                    
+                    <div class="audio-panel" id="sttPanel">
+                        <div class="stt-upload" id="sttUpload">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
+                            <p>Загрузите аудиофайл или запишите голос</p>
+                            <input type="file" id="sttFileInput" accept="audio/*" hidden>
+                            <button class="record-btn" id="recordBtn">
+                                <span class="record-icon"></span>
+                                Записать
+                            </button>
+                        </div>
+                        <div class="stt-result" id="sttResult"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Agent -->
+            <div class="tab-content" id="tab-agent">
+                <div class="agent-container">
+                    <div class="agent-sidebar">
+                        <div class="agent-tools">
+                            <h3>Инструменты</h3>
+                            <label class="tool-toggle">
+                                <input type="checkbox" id="toolSearch" checked>
+                                <span class="toggle-slider"></span>
+                                <span>Поиск в интернете</span>
+                            </label>
+                            <label class="tool-toggle">
+                                <input type="checkbox" id="toolCode" checked>
+                                <span class="toggle-slider"></span>
+                                <span>Выполнение кода</span>
+                            </label>
+                            <label class="tool-toggle">
+                                <input type="checkbox" id="toolWeather">
+                                <span class="toggle-slider"></span>
+                                <span>Погода (требуется ключ)</span>
+                            </label>
+                        </div>
+                        <div class="agent-presets">
+                            <h3>Пресеты агентов</h3>
+                            <button class="preset-btn" data-preset="coder">Senior Developer</button>
+                            <button class="preset-btn" data-preset="researcher">Researcher</button>
+                            <button class="preset-btn" data-preset="writer">Technical Writer</button>
+                        </div>
+                    </div>
+                    <div class="agent-chat">
+                        <div class="agent-messages" id="agentMessages"></div>
+                        <div class="agent-input-area">
+                            <textarea class="agent-input" id="agentInput" placeholder="Опишите задачу для агента..."></textarea>
+                            <button class="send-btn" id="sendAgentBtn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: RAG -->
+            <div class="tab-content" id="tab-rag">
+                <div class="rag-container">
+                    <div class="rag-sidebar">
+                        <div class="rag-upload">
+                            <h3>База знаний</h3>
+                            <div class="rag-dropzone" id="ragDropzone">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <p>Перетащите PDF, TXT, MD</p>
+                                <input type="file" id="ragFileInput" accept=".pdf,.txt,.md" multiple hidden>
+                            </div>
+                        </div>
+                        <div class="rag-documents" id="ragDocuments"></div>
+                    </div>
+                    <div class="rag-chat">
+                        <div class="rag-messages" id="ragMessages"></div>
+                        <div class="rag-input-area">
+                            <textarea class="rag-input" id="ragInput" placeholder="Задайте вопрос по документам..."></textarea>
+                            <button class="send-btn" id="sendRagBtn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Compare -->
+            <div class="tab-content" id="tab-compare">
+                <div class="compare-container">
+                    <div class="compare-header">
+                        <div class="compare-model-select">
+                            <select id="compareModel1"></select>
+                            <span>vs</span>
+                            <select id="compareModel2"></select>
+                        </div>
+                        <button class="primary-btn" id="runCompareBtn">Сравнить</button>
+                    </div>
+                    <div class="compare-layout">
+                        <div class="compare-panel">
+                            <div class="compare-panel-header" id="compareHeader1">Модель 1</div>
+                            <div class="compare-messages" id="compareMessages1"></div>
+                        </div>
+                        <div class="compare-panel">
+                            <div class="compare-panel-header" id="compareHeader2">Модель 2</div>
+                            <div class="compare-messages" id="compareMessages2"></div>
+                        </div>
+                    </div>
+                    <div class="compare-input-area">
+                        <textarea class="compare-input" id="compareInput" placeholder="Введите промпт для сравнения..."></textarea>
+                        <button class="send-btn" id="sendCompareBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Settings -->
+            <div class="tab-content" id="tab-settings">
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <h2>API Ключ</h2>
+                        <div class="setting-item">
+                            <label>OpenRouter API Key</label>
+                            <div class="input-group">
+                                <input type="password" id="apiKeyInput" placeholder="sk-or-v1-...">
+                                <button class="toggle-password" id="toggleApiKey">Показать</button>
+                            </div>
+                            <p class="setting-hint">Ваш ключ хранится локально в браузере</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h2>Параметры генерации</h2>
+                        <div class="setting-item">
+                            <label>Temperature</label>
+                            <input type="range" id="temperatureSlider" min="0" max="2" step="0.1" value="0.7">
+                            <span class="range-value" id="temperatureValue">0.7</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>Top P</label>
+                            <input type="range" id="topPSlider" min="0" max="1" step="0.05" value="1">
+                            <span class="range-value" id="topPValue">1.0</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>Max Tokens</label>
+                            <input type="number" id="maxTokensInput" value="4096" min="1" max="128000">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h2>Системные промпты</h2>
+                        <div class="setting-item">
+                            <label>Пресет</label>
+                            <select id="systemPresetSelect">
+                                <option value="">Пользовательский</option>
+                                <option value="coder">Senior Developer</option>
+                                <option value="assistant">Helpful Assistant</option>
+                                <option value="creative">Creative Writer</option>
+                                <option value="analyst">Data Analyst</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <textarea id="systemPromptInput" rows="4" placeholder="Введите системный промпт..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h2>Данные</h2>
+                        <div class="setting-item">
+                            <button class="secondary-btn" id="exportDataBtn">Экспортировать все данные</button>
+                            <button class="secondary-btn" id="importDataBtn">Импортировать данные</button>
+                            <input type="file" id="importFileInput" accept=".json" hidden>
+                        </div>
+                        <div class="setting-item">
+                            <button class="danger-btn" id="clearAllBtn">Очистить все данные</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <div class="section">
-      <div class="tab-bar">
-        <button class="active" onclick="switchTab('tabStrategies',this)">Стратегии</button>
-        <button onclick="switchTab('tabML',this)">🧠 ML</button>
-        <button onclick="switchTab('tabCalendar',this)">📅</button>
-      </div>
-      <div class="tab-content active" id="tabStrategies">
-        <div id="strategyStats"></div>
-      </div>
-      <div class="tab-content" id="tabML">
-        <div class="ml-panel">
-          <h4>🎓 Статус обучения</h4>
-          <div class="ml-param"><span>Прогресс:</span><b id="mlProgress">0 / 20 сделок</b></div>
-          <div class="progress-bar"><div class="fill" id="mlProgressBar" style="width:0%"></div></div>
-          <div class="ml-param"><span>Режим:</span><b id="mlMode">Обучение</b></div>
-          <div class="ml-param"><span>Лучшая стратегия:</span><b id="mlBestStrategy">—</b></div>
-          <div class="ml-param"><span>SL мультипликатор:</span><b id="mlSlMult">0.6</b></div>
-          <div class="ml-param"><span>TP мультипликатор:</span><b id="mlTpMult">1.8</b></div>
-          <div class="ml-param"><span>Риск %:</span><b id="mlRisk">1.5%</b></div>
-          <div class="ml-param"><span>ADX фильтр:</span><b id="mlAdxFilter">15</b></div>
-          <div class="ml-param"><span>Спред фильтр:</span><b id="mlSpreadFilter">0.15%</b></div>
+    <!-- Modal: Add Model -->
+    <div class="modal" id="addModelModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить модель</h3>
+                <button class="modal-close" id="closeAddModel">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>ID модели (например: z-ai/glm-5.2:free)</label>
+                    <input type="text" id="newModelId" placeholder="провайдер/модель">
+                </div>
+                <div class="form-group">
+                    <label>Название (опционально)</label>
+                    <input type="text" id="newModelName" placeholder="Название для отображения">
+                </div>
+                <div class="form-group">
+                    <label>Контекст (опционально)</label>
+                    <input type="number" id="newModelContext" placeholder="128000">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" id="cancelAddModel">Отмена</button>
+                <button class="primary-btn" id="confirmAddModel">Добавить</button>
+            </div>
         </div>
-        <label class="checkbox-wrap"><input type="checkbox" id="useML" checked><span>🧠 Включить ML адаптацию</span></label>
-        <label class="checkbox-wrap"><input type="checkbox" id="useTimePatterns"><span>⏰ Временные паттерны</span></label>
-        <button class="action train" onclick="runBacktest()">🎓 Обучение на истории</button>
-        <div id="backtestResult" style="margin-top:8px;font-size:11px;color:#94a3b8"></div>
-      </div>
-      <div class="tab-content" id="tabCalendar">
-        <div class="calendar-nav">
-          <button onclick="changeMonth(-1)">◀</button>
-          <span class="month-title" id="calendarTitle">Август 2026</span>
-          <button onclick="changeMonth(1)">▶</button>
-        </div>
-        <div class="calendar-header">
-          <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
-        </div>
-        <div class="calendar-grid" id="calendarGrid"></div>
-        <div class="month-summary" id="monthSummary">
-          <div class="sum-box"><div class="sum-label">Сделок</div><div class="sum-val" id="monthTrades">0</div></div>
-          <div class="sum-box"><div class="sum-label">Win Rate</div><div class="sum-val" id="monthWR">0%</div></div>
-          <div class="sum-box"><div class="sum-label">Плюс дней</div><div class="sum-val pos" id="monthPlusDays">0</div></div>
-          <div class="sum-box"><div class="sum-label">P&L мес</div><div class="sum-val" id="monthPnl">0.00%</div></div>
-        </div>
-        <div class="day-detail" id="dayDetail">
-          <h4 id="dayDetailTitle">Детали дня</h4>
-          <div id="dayDetailContent"></div>
-        </div>
-      </div>
     </div>
 
-    <div class="section">
-      <h3>⚙️ Настройки</h3>
-      <div class="row"><label>Актив:</label>
-        <select id="symbol">
-          <option value="ETHUSDT">ETH/USDT</option>
-          <option value="PAXGUSDT" selected>PAXG/USDT</option>
-          <option value="BTCUSDT">BTC/USDT</option>
-          <option value="SOLUSDT">SOL/USDT</option>
-          <option value="XRPUSDT">XRP/USDT</option>
-        </select>
-      </div>
-      <div class="row"><label>Режим:</label>
-        <select id="botMode">
-          <option value="turbo" selected>🔥 TURBO</option>
-          <option value="standard">⚖️ Стандарт</option>
-          <option value="safe">🛡️ Безопасный</option>
-        </select>
-      </div>
-      <div class="row"><label>Базовый риск %:</label><input type="number" id="riskPct" value="1.5" step="0.1" min="0.1" max="5"></div>
-      <div class="row"><label>Плечо:</label><input type="number" id="leverage" value="5" step="1" min="1" max="20"></div>
-      <div class="row"><label>SL ATR:</label><input type="number" id="slAtr" value="0.6" step="0.1" min="0.1" max="3"></div>
-      <div class="row"><label>TP ATR:</label><input type="number" id="tpAtr" value="1.8" step="0.1" min="0.5" max="5"></div>
-    </div>
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toastContainer"></div>
 
-    <div class="section">
-      <h3>🎯 Стратегии</h3>
-      <label class="checkbox-wrap"><input type="checkbox" id="useMomentum" checked><span>MOMENTUM</span></label>
-      <label class="checkbox-wrap"><input type="checkbox" id="useVwap" checked><span>VWAP Bounce</span></label>
-      <label class="checkbox-wrap"><input type="checkbox" id="useBreak" checked><span>BREAK</span></label>
-      <label class="checkbox-wrap"><input type="checkbox" id="usePullback" checked><span>PULLBACK</span></label>
-    </div>
-
-    
-    <div class="section">
-      <h3>🔄 Copy Trading</h3>
-      <label class="checkbox-wrap"><input type="checkbox" id="copyTradingEnabled"><span>Включить Copy Trading</span></label>
-      <label class="checkbox-wrap"><input type="checkbox" id="copyAutoConfirm"><span>Авто-подтверждение сигналов</span></label>
-
-      <div class="copy-section">
-        <h4>📡 Ожидающие сигналы <span class="pending-badge" id="pendingCount" style="display:none">0</span></h4>
-        <div id="pendingSignals"><div class="empty-state">Нет активных сигналов</div></div>
-      </div>
-
-      <div class="copy-section" style="margin-top:6px">
-        <h4>💼 Мои сделки <span id="activeUserPositions" style="color:#94a3b8;font-size:10px"></span></h4>
-        <div id="userPositionsPanel"><div class="empty-state">Нет открытых позиций</div></div>
-      </div>
-    </div>
-<div class="section">
-      <button id="startBtn" class="action start" onclick="startBot()">▶ СТАРТ</button>
-      <button id="stopBtn" class="action stop" onclick="stopBot()" disabled style="display:none">⏹ СТОП</button>
-    </div>
-  </div>
-</div>
-
-<script>
-
-const CONFIG = {
-  wsUrl: 'wss://stream.binance.com:9443/ws',
-  apiUrl: 'https://api.binance.com/api/v3',
-  intervals: { '1m': '1m', '5m': '5m', '15m': '15m', '1h': '1h' },
-  limit: 200,
-  colors: {
-    bg: '#0f172a', grid: '#1e293b', text: '#64748b',
-    green: '#00ff88', red: '#ff3366', blue: '#00ccff',
-    orange: '#f59e0b', purple: '#a855f7', yellow: '#fbbf24',
-    vwap: '#a855f7', ema9: '#fbbf24', ema21: '#00ccff', ema50: '#f59e0b',
-    bb: '#334155', volumeUp: '#00ff8833', volumeDown: '#ff336633'
-  },
-  ml: { warmUpTrades: 20, minTradesForAdapt: 5, adaptationRate: 0.15, decayFactor: 0.95 }
-};
-
-let state = {
-  symbol: 'PAXGUSDT', tf: '5m', connected: false, running: false,
-  candles: {}, ticks: [],
-  position: null,
-  history: [],
-  tradeMarkers: [],
-  mode: 'turbo',
-  ws: null,
-  stats: { total: 0, wins: 0, losses: 0, pnl: 0, streak: [], sessionStart: null },
-  strategyStats: {
-    MOMENTUM:  {trades:0, wins:0, losses:0, pnl:0},
-    VWAP:      {trades:0, wins:0, losses:0, pnl:0},
-    BREAK:     {trades:0, wins:0, losses:0, pnl:0},
-    PULLBACK:  {trades:0, wins:0, losses:0, pnl:0}
-  },
-  dailyStats: {},
-  lastScan: 0,
-  zoom: { scale: 1, offset: 0, dragging: false, dragStartX: 0, dragStartOffset: 0 },
-  audioCtx: null,
-  calendarMonth: new Date().getMonth(),
-  calendarYear: new Date().getFullYear(),
-  ml: {
-    enabled: true, warmUpDone: false,
-    params: { slMult: 0.6, tpMult: 1.8, riskPct: 1.5, adxMin: 15, spreadMax: 0.15, strategyWeights: { MOMENTUM: 1, VWAP: 1, BREAK: 1, PULLBACK: 1 } },
-    strategyPerformance: {
-      MOMENTUM:  { byAdxHigh:{w:0,l:0,pnl:0}, byAdxLow:{w:0,l:0,pnl:0}, byTrendUp:{w:0,l:0,pnl:0}, byTrendDown:{w:0,l:0,pnl:0}, bySpreadWide:{w:0,l:0,pnl:0}, bySpreadNarrow:{w:0,l:0,pnl:0}, total:{w:0,l:0,pnl:0} },
-      VWAP:      { byAdxHigh:{w:0,l:0,pnl:0}, byAdxLow:{w:0,l:0,pnl:0}, byTrendUp:{w:0,l:0,pnl:0}, byTrendDown:{w:0,l:0,pnl:0}, bySpreadWide:{w:0,l:0,pnl:0}, bySpreadNarrow:{w:0,l:0,pnl:0}, total:{w:0,l:0,pnl:0} },
-      BREAK:     { byAdxHigh:{w:0,l:0,pnl:0}, byAdxLow:{w:0,l:0,pnl:0}, byTrendUp:{w:0,l:0,pnl:0}, byTrendDown:{w:0,l:0,pnl:0}, bySpreadWide:{w:0,l:0,pnl:0}, bySpreadNarrow:{w:0,l:0,pnl:0}, total:{w:0,l:0,pnl:0} },
-      PULLBACK:  { byAdxHigh:{w:0,l:0,pnl:0}, byAdxLow:{w:0,l:0,pnl:0}, byTrendUp:{w:0,l:0,pnl:0}, byTrendDown:{w:0,l:0,pnl:0}, bySpreadWide:{w:0,l:0,pnl:0}, bySpreadNarrow:{w:0,l:0,pnl:0}, total:{w:0,l:0,pnl:0} }
-    },
-    timePatterns: {},
-    slHistory: [], tpHistory: [],
-    lastMarketState: null
-,
-  copyTrading: {
-    enabled: false, autoConfirm: false,
-    pendingSignals: [], userPositions: [],
-    signalHistory: [], maxSignals: 10
-  }  }
-};
-
-function loadState() {
-  try {
-    const saved = localStorage.getItem('scalper_v4_state');
-    if (saved) {
-      const p = JSON.parse(saved);
-      if (p.stats) state.stats = p.stats;
-      if (p.strategyStats) state.strategyStats = p.strategyStats;
-      if (p.dailyStats) state.dailyStats = p.dailyStats;
-      if (p.history) state.history = p.history;
-      if (p.ml) state.ml = {...state.ml, ...p.ml};
-      if (p.copyTrading) state.copyTrading = {...state.copyTrading, ...p.copyTrading};
-    }
-  } catch(e) {}
-}
-function saveState() {
-  try {
-    localStorage.setItem('scalper_v4_state', JSON.stringify({
-      stats: state.stats, strategyStats: state.strategyStats,
-      dailyStats: state.dailyStats, history: state.history, ml: state.ml, copyTrading: state.copyTrading
-    }));
-  } catch(e) {}
-}
-
-function $(id){ return document.getElementById(id); }
-function log(msg, type='info') {
-  const panel = $('log'); if (!panel) return;
-  const div = document.createElement('div'); div.className = 'log-entry';
-  const time = new Date().toLocaleTimeString('ru-RU',{hour12:false});
-  let color = '#e2e8f0';
-  if (type==='entry') color='#00ff88'; if (type==='exit') color='#60a5fa';
-  if (type==='sl') color='#ff3366'; if (type==='tp') color='#00ff88';
-  if (type==='warn') color='#fbbf24'; if (type==='ml') color='#a855f7';
-  div.innerHTML = `<span class="log-time">${time}</span><span style="color:${color}">${msg}</span>`;
-  panel.insertBefore(div, panel.firstChild);
-  while (panel.children.length > 100) panel.removeChild(panel.lastChild);
-}
-function playSound(type) {
-  if (!state.audioCtx) state.audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  const ctx = state.audioCtx, osc = ctx.createOscillator(), gain = ctx.createGain();
-  osc.connect(gain); gain.connect(ctx.destination);
-  if (type==='entry') { osc.frequency.value=880; gain.gain.value=0.1; }
-  else if (type==='exit') { osc.frequency.value=660; gain.gain.value=0.08; }
-  else if (type==='sl') { osc.frequency.value=220; gain.gain.value=0.12; }
-  else { osc.frequency.value=440; gain.gain.value=0.05; }
-  osc.start(); osc.stop(ctx.currentTime+0.12);
-}
-function switchTab(tabId, btn) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
-  $(tabId).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (tabId==='tabCalendar') renderCalendar();
-}
-
-async function fetchKlines(symbol, interval, limit=200) {
-  try {
-    const r = await fetch(`${CONFIG.apiUrl}/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
-    if (!r.ok) throw new Error('HTTP '+r.status);
-    const data = await r.json();
-    return data.map(d => ({ t:d[0], open:+d[1], high:+d[2], low:+d[3], close:+d[4], volume:+d[5], quoteVolume:+d[7] }));
-  } catch(e) { log('Ошибка загрузки свечей: '+e.message, 'warn'); return null; }
-}
-
-function sma(arr, n) { const res=[]; for(let i=0;i<arr.length;i++){ if(i<n-1){res.push(null);continue;} let s=0; for(let j=0;j<n;j++)s+=arr[i-j].close; res.push(s/n);} return res; }
-function ema(arr, n) { const res=[]; let k=2/(n+1); for(let i=0;i<arr.length;i++){ if(i===0){res.push(arr[0].close);continue;} if(i<n-1){res.push(arr[i].close);continue;} res.push(arr[i].close*k+res[i-1]*(1-k));} return res; }
-function atr(candles, n=14) { const res=[]; for(let i=0;i<candles.length;i++){ if(i===0){res.push(candles[i].high-candles[i].low);continue;} const tr=Math.max(candles[i].high-candles[i].low, Math.abs(candles[i].high-candles[i-1].close), Math.abs(candles[i].low-candles[i-1].close)); if(i<n){res.push(tr);continue;} res.push((res[i-1]*(n-1)+tr)/n);} return res; }
-function vwap(candles) { let cumPV=0,cumV=0; return candles.map(c=>{ const tp=(c.high+c.low+c.close)/3; cumPV+=tp*c.volume; cumV+=c.volume; return cumV>0?cumPV/cumV:c.close; }); }
-function bb(candles, n=20, k=2) { const mid=sma(candles,n); const res={mid,upper:[],lower:[],width:[]}; for(let i=0;i<candles.length;i++){ if(i<n-1){res.upper.push(null);res.lower.push(null);res.width.push(0);continue;} let s=0; for(let j=0;j<n;j++)s+=Math.pow(candles[i-j].close-mid[i],2); const std=Math.sqrt(s/n); res.upper.push(mid[i]+k*std); res.lower.push(mid[i]-k*std); res.width.push((2*k*std)/mid[i]*100);} return res; }
-function adx(candles, n=14) { const dx=[]; let plusDM=0,minusDM=0,trSum=0; for(let i=1;i<candles.length;i++){ const up=candles[i].high-candles[i-1].high, down=candles[i-1].low-candles[i].low; const pdm=(up>down&&up>0)?up:0; const mdm=(down>up&&down>0)?down:0; const tr=Math.max(candles[i].high-candles[i].low, Math.abs(candles[i].high-candles[i-1].close), Math.abs(candles[i].low-candles[i-1].close)); if(i<=n){plusDM+=pdm;minusDM+=mdm;trSum+=tr;} else { plusDM=(plusDM*(n-1)+pdm)/n; minusDM=(minusDM*(n-1)+mdm)/n; trSum=(trSum*(n-1)+tr)/n; } if(i>=n&&trSum>0){ const pdi=100*plusDM/trSum, mdi=100*minusDM/trSum; dx.push(Math.abs(pdi-mdi)/(pdi+mdi)*100); } else dx.push(null); } dx.unshift(null); const adxArr=[]; for(let i=0;i<dx.length;i++){ if(i<n||dx[i]===null){adxArr.push(null);continue;} if(i===n) adxArr.push(dx.slice(1,n+1).reduce((a,b)=>a+b,0)/n); else adxArr.push((adxArr[i-1]*(n-1)+dx[i])/n); } return adxArr; }
-function rsi(candles, n=14) { let gains=0,losses=0; const res=[]; for(let i=0;i<candles.length;i++){ if(i===0){res.push(50);continue;} const change=candles[i].close-candles[i-1].close; const gain=change>0?change:0; const loss=change<0?-change:0; if(i<=n){gains+=gain;losses+=loss;} else {gains=(gains*(n-1)+gain)/n;losses=(losses*(n-1)+loss)/n;} if(i>=n){ const rs=losses>0?gains/losses:999; res.push(100-100/(1+rs));} else res.push(50);} return res; }
-
-function analyzeMarket(candles) {
-  if (candles.length<55) return {mode:'MIXED',adx:0,trend:'flat',spread:0,bbWidth:0,ema9:0,ema21:0,ema50:0,vwap:0,atr:0,bb:null};
-  const ema9v=ema(candles,9), ema21v=ema(candles,21), ema50v=ema(candles,50), atrv=atr(candles,14), adxv=adx(candles,14), bbv=bb(candles,20,2), vw=vwap(candles);
-  const last=candles.length-1, price=candles[last].close;
-  const spread=((candles[last].high-candles[last].low)/price)*100, adxVal=adxv[last]||0, bbWidth=bbv.width[last]||0;
-  const aboveEma50=price>(ema50v[last]||price), distEma50=Math.abs(price-(ema50v[last]||price))/price*100;
-  let mode='MIXED'; if(adxVal>25&&distEma50>0.15) mode=aboveEma50?'TREND_UP':'TREND_DOWN'; else if(bbWidth<0.5&&adxVal<20) mode='SQUEEZE'; else if(adxVal<20&&distEma50<0.1) mode='RANGE';
-  return {mode,adx:adxVal,trend:aboveEma50?'up':'down',spread,bbWidth,ema9:ema9v[last],ema21:ema21v[last],ema50:ema50v[last],vwap:vw[last],atr:atrv[last],bb:bbv};
-}
-
-function checkMomentum(candles,vol){ if(candles.length<3)return null; const last=candles[candles.length-1], prev=candles[candles.length-2], pprev=candles[candles.length-3]; const avgVol=candles.slice(-20).reduce((s,c)=>s+c.volume,0)/20; if(vol<avgVol*1.2)return null; if(last.close>prev.high&&last.close>pprev.high)return{dir:'LONG',reason:'Пробой high 2 свечей',strategy:'MOMENTUM'}; if(last.close<prev.low&&last.close<pprev.low)return{dir:'SHORT',reason:'Пробой low 2 свечей',strategy:'MOMENTUM'}; return null; }
-function checkVwap(candles,vol){ if(candles.length<30)return null; const vw=vwap(candles), last=candles.length-1, price=candles[last].close; const avgVol=candles.slice(-20).reduce((s,c)=>s+c.volume,0)/20; if(vol<avgVol*0.8)return null; if(price>vw[last]&&candles[last].low<=vw[last]*1.0005&&candles[last].close>vw[last])return{dir:'LONG',reason:'Отскок от VWAP вверх',strategy:'VWAP'}; if(price<vw[last]&&candles[last].high>=vw[last]*0.9995&&candles[last].close<vw[last])return{dir:'SHORT',reason:'Отскок от VWAP вниз',strategy:'VWAP'}; return null; }
-function checkBreak(candles,vol){ if(candles.length<22)return null; const last=candles.length-1, range=candles.slice(last-20,last), hh=Math.max(...range.map(c=>c.high)), ll=Math.min(...range.map(c=>c.low)); const avgVol=candles.slice(-20).reduce((s,c)=>s+c.volume,0)/20; if(vol<avgVol*1.3)return null; if(candles[last].close>hh&&candles[last].open<hh)return{dir:'LONG',reason:'Пробой 20-барного диапазона',strategy:'BREAK'}; if(candles[last].close<ll&&candles[last].open>ll)return{dir:'SHORT',reason:'Пробой 20-барного диапазона вниз',strategy:'BREAK'}; return null; }
-function checkPullback(candles,vol){ if(candles.length<15)return null; const ema9v=ema(candles,9), last=candles.length-1, price=candles[last].close, e9=ema9v[last]; const avgVol=candles.slice(-20).reduce((s,c)=>s+c.volume,0)/20; if(vol<avgVol*0.9)return null; const isBull=candles[last].close>candles[last].open, isBear=candles[last].close<candles[last].open; if(price>e9&&candles[last].low<=e9*1.0003&&isBull)return{dir:'LONG',reason:'Откат к EMA9 + бычья свеча',strategy:'PULLBACK'}; if(price<e9&&candles[last].high>=e9*0.9997&&isBear)return{dir:'SHORT',reason:'Откат к EMA9 + медвежья свеча',strategy:'PULLBACK'}; return null; }
-
-function getMarketConditionKey(analysis){
-  return { adx: analysis.adx>25?'byAdxHigh':'byAdxLow', trend: analysis.trend==='up'?'byTrendUp':'byTrendDown', spread: analysis.spread>0.12?'bySpreadWide':'bySpreadNarrow' };
-}
-
-function scoreStrategy(strategy, analysis){
-  const perf=state.ml.strategyPerformance[strategy]; if(!perf)return 0;
-  const cond=getMarketConditionKey(analysis);
-  const keys=['total',cond.adx,cond.trend,cond.spread];
-  let score=0,weight=0;
-  keys.forEach((k,idx)=>{
-    const p=perf[k]; if(!p||p.w+p.l<2)return;
-    const wr=(p.w+1)/(p.w+p.l+2); const avgPnl=p.pnl/(p.w+p.l);
-    const w=[1,0.6,0.5,0.4][idx]; score+=wr*Math.max(avgPnl,-10)*w; weight+=w;
-  });
-  return weight>0?score/weight:0.5;
-}
-
-function adaptAfterTrade(strategy,pnl,analysis){
-  if(!$('useML').checked)return;
-  const ml=state.ml; const perf=ml.strategyPerformance[strategy]; const cond=getMarketConditionKey(analysis); const isWin=pnl>0;
-  ['total',cond.adx,cond.trend,cond.spread].forEach(k=>{ if(!perf[k])perf[k]={w:0,l:0,pnl:0}; perf[k].pnl+=pnl; if(isWin)perf[k].w++;else perf[k].l++; });
-  ml.slHistory.push({mult:ml.params.slMult,pnl:pnl}); ml.tpHistory.push({mult:ml.params.tpMult,pnl:pnl});
-  if(ml.slHistory.length>30)ml.slHistory.shift(); if(ml.tpHistory.length>30)ml.tpHistory.shift();
-  if(ml.slHistory.length>=10){ const recent=ml.slHistory.slice(-10); const avgPnl=recent.reduce((s,h)=>s+h.pnl,0)/recent.length; if(avgPnl<-0.5)ml.params.slMult=Math.min(2.0,ml.params.slMult*1.05); else if(avgPnl>0.3)ml.params.slMult=Math.max(0.3,ml.params.slMult*0.97); }
-  if(ml.tpHistory.length>=10){ const recent=ml.tpHistory.slice(-10); const winRate=recent.filter(h=>h.pnl>0).length/recent.length; if(winRate<0.35)ml.params.tpMult=Math.min(3.0,ml.params.tpMult*1.08); else if(winRate>0.6)ml.params.tpMult=Math.max(0.8,ml.params.tpMult*0.95); }
-  const total=state.stats.total;
-  if(total>=10){ const wins=state.stats.wins, losses=state.stats.losses; const avgWin=state.history.filter(h=>h.pnl>0).reduce((s,h)=>s+h.pnl,0)/Math.max(1,wins); const avgLoss=Math.abs(state.history.filter(h=>h.pnl<0).reduce((s,h)=>s+h.pnl,0)/Math.max(1,losses)); const b=avgWin/Math.max(avgLoss,0.01); const p=wins/Math.max(1,total); const kelly=(b*p-(1-p))/b; const halfKelly=Math.max(0.3,Math.min(3.0,kelly*0.5)); ml.params.riskPct=parseFloat($('riskPct').value)*halfKelly; ml.params.riskPct=Math.max(0.3,Math.min(5.0,ml.params.riskPct)); }
-  const recent=state.history.slice(-15);
-  if(recent.length>=10){ const avgSpread=recent.reduce((s,h)=>s+(h.spreadAtEntry||0.1),0)/recent.length; ml.params.spreadMax=Math.max(0.08,Math.min(0.5,avgSpread*1.3)); const avgAdx=recent.reduce((s,h)=>s+(h.adxAtEntry||20),0)/recent.length; ml.params.adxMin=Math.max(10,Math.min(30,avgAdx*0.7)); }
-  const strategies=['MOMENTUM','VWAP','BREAK','PULLBACK']; const scores=strategies.map(s=>({s,sc:scoreStrategy(s,analysis)})); const maxScore=Math.max(...scores.map(x=>x.sc),0.01);
-  scores.forEach(({s,sc})=>{ ml.params.strategyWeights[s]=0.7+0.3*(sc/maxScore); });
-  if(!ml.warmUpDone&&state.stats.total>=CONFIG.ml.warmUpTrades){ ml.warmUpDone=true; log(`🎓 Обучение завершено! Адаптация активна. Лучшая: ${getBestStrategy()}`,'ml'); }
-  saveState(); updateMLPanel();
-}
-
-function getBestStrategy(){ let best='MOMENTUM',bestScore=-999; const analysis=state.ml.lastMarketState||{adx:20,trend:'up',spread:0.1}; for(const s of ['MOMENTUM','VWAP','BREAK','PULLBACK']){ const sc=scoreStrategy(s,analysis); if(sc>bestScore){bestScore=sc;best=s;} } return best; }
-function checkTimePatterns(strategy){ if(!$('useTimePatterns').checked)return true; const d=new Date().getDay(), h=new Date().getHours(); const tp=state.ml.timePatterns; if(!tp[d]||!tp[d][h]||!tp[d][h][strategy])return true; const data=tp[d][h][strategy]; if(data.trades<3)return true; return (data.pnl/data.trades)>-0.2; }
-function updateTimePatterns(strategy,pnl){ const d=new Date().getDay(), h=new Date().getHours(); const tp=state.ml.timePatterns; if(!tp[d])tp[d]={}; if(!tp[d][h])tp[d][h]={}; if(!tp[d][h][strategy])tp[d][h][strategy]={trades:0,wins:0,pnl:0}; const rec=tp[d][h][strategy]; rec.trades++; rec.pnl+=pnl; if(pnl>0)rec.wins++; }
-
-function updateMLPanel(){
-  const ml=state.ml, total=state.stats.total;
-  const progress=Math.min(100,(total/CONFIG.ml.warmUpTrades)*100);
-  if($('mlProgress'))$('mlProgress').textContent=`${total} / ${CONFIG.ml.warmUpTrades} сделок`;
-  if($('mlProgressBar'))$('mlProgressBar').style.width=progress+'%';
-  if($('mlMode'))$('mlMode').textContent=ml.warmUpDone?'🧠 Адаптация':'🎓 Обучение';
-  if($('mlBestStrategy'))$('mlBestStrategy').textContent=getBestStrategy();
-  if($('mlSlMult'))$('mlSlMult').textContent=ml.params.slMult.toFixed(2);
-  if($('mlTpMult'))$('mlTpMult').textContent=ml.params.tpMult.toFixed(2);
-  if($('mlRisk'))$('mlRisk').textContent=ml.params.riskPct.toFixed(2)+'%';
-  if($('mlAdxFilter'))$('mlAdxFilter').textContent=ml.params.adxMin.toFixed(0);
-  if($('mlSpreadFilter'))$('mlSpreadFilter').textContent=ml.params.spreadMax.toFixed(2)+'%';
-  if($('mlBadge')){ $('mlBadge').textContent=ml.warmUpDone?'🧠 ML АКТИВЕН':'🎓 ML ОБУЧЕНИЕ'; $('mlBadge').style.background=ml.warmUpDone?'#7c3aed':'#f59e0b'; }
-}
-
-async function runBacktest(){
-  if(state.running){log('Остановите бота перед обучением','warn');return;}
-  log('🎓 Запуск обучения на истории...','ml');
-  const symbol=$('symbol').value, tf=state.tf;
-  const data=await fetchKlines(symbol,CONFIG.intervals[tf],500);
-  if(!data||data.length<100){log('Недостаточно данных','warn');return;}
-  const variants=[];
-  for(let sl=0.3;sl<=1.5;sl+=0.3)for(let tp=1.0;tp<=3.0;tp+=0.5)for(let risk=0.5;risk<=2.5;risk+=0.5)variants.push({slMult:sl,tpMult:tp,riskPct:risk});
-  let bestResult=null; let tested=0;
-  for(const v of variants){ const result=simulateBacktest(data,v); tested++; if(!bestResult||result.score>bestResult.score)bestResult={...v,...result}; }
-  if(bestResult){
-    state.ml.params.slMult=bestResult.slMult; state.ml.params.tpMult=bestResult.tpMult; state.ml.params.riskPct=bestResult.riskPct;
-    log(`🎓 Обучено! Тестов:${tested} | P&L:${bestResult.pnl.toFixed(2)}% | WR:${bestResult.wr.toFixed(1)}% | SL:${bestResult.slMult} TP:${bestResult.tpMult}`,'ml');
-    if($('backtestResult'))$('backtestResult').innerHTML=`<span style="color:#00ff88">✅ Обучено!</span><br>P&L:${bestResult.pnl.toFixed(2)}% | WR:${bestResult.wr.toFixed(1)}%<br>SL:${bestResult.slMult} | TP:${bestResult.tpMult} | Риск:${bestResult.riskPct}%`;
-    updateMLPanel(); saveState();
-  }
-}
-
-function simulateBacktest(candles,params){
-  let pnl=0,wins=0,losses=0,trades=0; let pos=null;
-  for(let i=50;i<candles.length-1;i++){
-    const slice=candles.slice(0,i+1), last=slice[slice.length-1];
-    const analysis=analyzeMarket(slice); const atrv=atr(slice,14); const atrVal=atrv[atrv.length-1]||last.close*0.001;
-    if(pos){
-      const exitPnl=pos.dir==='LONG'?(last.close-pos.entry)/pos.entry*100*5:(pos.entry-last.close)/pos.entry*100*5;
-      if(pos.dir==='LONG'){ if(last.low<=pos.sl){pnl+=(pos.sl-pos.entry)/pos.entry*100*5;losses++;trades++;pos=null;} else if(last.high>=pos.tp){pnl+=(pos.tp-pos.entry)/pos.entry*100*5;wins++;trades++;pos=null;} }
-      else { if(last.high>=pos.sl){pnl+=(pos.entry-pos.sl)/pos.entry*100*5;losses++;trades++;pos=null;} else if(last.low<=pos.tp){pnl+=(pos.entry-pos.tp)/pos.entry*100*5;wins++;trades++;pos=null;} }
-      if(pos&&i-pos.entryIdx>10){pnl+=exitPnl;if(exitPnl>0)wins++;else losses++;trades++;pos=null;}
-      continue;
-    }
-    if(analysis.adx<15||analysis.spread>0.15)continue;
-    const strategies=[];
-    const s1=checkMomentum(slice,last.volume);if(s1)strategies.push(s1);
-    const s2=checkVwap(slice,last.volume);if(s2)strategies.push(s2);
-    const s3=checkBreak(slice,last.volume);if(s3)strategies.push(s3);
-    const s4=checkPullback(slice,last.volume);if(s4)strategies.push(s4);
-    if(strategies.length===0)continue;
-    const best=strategies[0]; let sl,tp;
-    if(best.dir==='LONG'){sl=last.close-atrVal*params.slMult;tp=last.close+atrVal*params.tpMult;}else{sl=last.close+atrVal*params.slMult;tp=last.close-atrVal*params.tpMult;}
-    pos={dir:best.dir,entry:last.close,sl,tp,entryIdx:i};
-  }
-  const wr=trades>0?wins/trades*100:0; const score=pnl*0.7+wr*0.3;
-  return{pnl,wr,score,trades};
-}
-
-function calculateSize(riskPct,slPrice,entry,leverage){ const account=10000; const riskAmount=account*(riskPct/100); const slDist=Math.abs(entry-slPrice)/entry; if(slDist===0)return 0; const size=(riskAmount/slDist)*leverage; return Math.min(size,account*leverage*0.95); }
-
-function openPosition(dir,entry,sl,tp,strategy,reason,analysis){
-  if(state.position)return;
-  const ml=state.ml; const useML=$('useML').checked;
-  const risk=useML?ml.params.riskPct:(parseFloat($('riskPct').value)||1.5);
-  const lev=parseFloat($('leverage').value)||5;
-  const size=calculateSize(risk,sl,entry,lev);
-  state.position={dir,entry,sl,tp,size,strategy,reason,layers:[{entry,size:size*0.3},{entry,size:size*0.3},{entry,size:size*0.4}],closedLayers:0,entryTime:Date.now(),entryCandleIdx:state.candles[state.tf]?state.candles[state.tf].length-1:0,maxProfit:0,layer1Done:false,layer2Done:false,spreadAtEntry:analysis.spread,adxAtEntry:analysis.adx};
-  state.stats.total++; state.strategyStats[strategy].trades++; state.ml.lastMarketState=analysis;
-  playSound('entry');
-  log(`🚀 ВХОД ${dir} @ ${entry.toFixed(2)} | ${strategy} | ${reason}`,'entry');
-  addJournalEntry('ENTRY',{dir,entry,strategy,reason,sl,tp,time:new Date().toLocaleTimeString('ru-RU')});
-  updateUI();
-}
-
-function closePosition(reason,exitPrice){
-  if(!state.position)return; const pos=state.position; const lev=parseFloat($('leverage').value)||5;
-  let pnl=0; if(pos.dir==='LONG')pnl=(exitPrice-pos.entry)/pos.entry*100*lev; else pnl=(pos.entry-exitPrice)/pos.entry*100*lev;
-  const isWin=pnl>0;
-  state.stats.pnl+=pnl; state.strategyStats[pos.strategy].pnl+=pnl;
-  if(isWin){state.stats.wins++;state.strategyStats[pos.strategy].wins++;state.stats.streak.push('W');}else{state.stats.losses++;state.strategyStats[pos.strategy].losses++;state.stats.streak.push('L');}
-  while(state.stats.streak.length>15)state.stats.streak.shift();
-  state.history.push({...pos,exit:exitPrice,pnl,reason,exitTime:Date.now()});
-  state.tradeMarkers.push({type:'exit',dir:pos.dir,price:exitPrice,pnl,time:Date.now(),reason,candleIdx:state.candles[state.tf]?state.candles[state.tf].length-1:0});
-  if($('useML').checked)adaptAfterTrade(pos.strategy,pnl,state.ml.lastMarketState||{adx:20,trend:'up',spread:0.1});
-  updateTimePatterns(pos.strategy,pnl);
-  const dayKey=new Date().toISOString().slice(0,10);
-  if(!state.dailyStats[dayKey])state.dailyStats[dayKey]={trades:0,wins:0,losses:0,pnl:0,history:[]};
-  state.dailyStats[dayKey].trades++; state.dailyStats[dayKey].pnl+=pnl; state.dailyStats[dayKey].history.push({...pos,exit:exitPrice,pnl,reason,exitTime:Date.now()});
-  if(isWin)state.dailyStats[dayKey].wins++;else state.dailyStats[dayKey].losses++;
-  saveState(); playSound(isWin?'exit':'sl');
-  log(`${reason} | ${pos.dir} @ ${exitPrice.toFixed(2)} | P&L ${pnl>=0?'+':''}${pnl.toFixed(2)}% | ${pos.strategy}`,isWin?'tp':'sl');
-  addJournalEntry('EXIT',{dir:pos.dir,entry:pos.entry,exit:exitPrice,pnl,strategy:pos.strategy,reason,time:new Date().toLocaleTimeString('ru-RU')});
-  state.position=null; updateUI();
-}
-
-function addJournalEntry(type,data){
-  const panel=$('journal'); if(!panel)return;
-  const div=document.createElement('div'); div.className='log-entry';
-  div.style.borderLeft=type==='ENTRY'?'2px solid #00ff88':'2px solid #60a5fa';
-  div.style.paddingLeft='6px'; div.style.marginBottom='4px';
-  if(type==='ENTRY'){ 
-    div.innerHTML=`<span class="log-time">${data.time}</span><span class="entry">▲ ВХОД ${data.dir}</span> @ ${data.entry.toFixed(2)}<br><span style="color:#94a3b8;margin-left:28px">${data.strategy} | SL ${data.sl.toFixed(2)} | TP ${data.tp.toFixed(2)}</span><br><span style="color:#64748b;margin-left:28px;font-size:10px">${data.reason}</span>`; 
-    div.id = 'journal-entry-' + Date.now();
-    // If this is a user position entry, mark it
-    const ct = state.copyTrading;
-    const isUserPos = ct.userPositions.some(p => Math.abs(p.entry - data.entry) < 0.01 && p.dir === data.dir);
-    if(isUserPos) div.classList.add('journal-pos-active');
-  }
-  else { 
-    const pnlClass=data.pnl>=0?'pnl-pos':'pnl-neg'; 
-    div.innerHTML=`<span class="log-time">${data.time}</span><span class="exit">▼ ВЫХОД ${data.dir}</span> @ ${data.exit.toFixed(2)}<br><span style="color:#94a3b8;margin-left:28px">${data.reason} | Стратегия: ${data.strategy}</span><br><span class="${pnlClass}" style="margin-left:28px;font-size:12px">P&L: ${data.pnl>=0?'+':''}${data.pnl.toFixed(2)}%</span>`; 
-  }
-  panel.insertBefore(div,panel.firstChild); while(panel.children.length>80)panel.removeChild(panel.lastChild);
-}
-
-function updateJournalLivePnl(){
-  const panel = $('journal'); if(!panel) return;
-  const candles = state.candles[state.tf];
-  if(!candles || candles.length === 0) return;
-  const price = candles[candles.length-1].close;
-  const lev = parseFloat($('leverage').value)||5;
-
-  // Update entries that have active user positions
-  const ct = state.copyTrading;
-  ct.userPositions.forEach(pos => {
-    const pnlRaw = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100 : (pos.entry-price)/pos.entry*100;
-    const pnl = pnlRaw * lev;
-    const elapsed = Math.floor((Date.now() - pos.entryTime)/1000);
-    const mins = Math.floor(elapsed/60), secs = elapsed%60;
-
-    // Find journal entries for this position and update them
-    const entries = panel.querySelectorAll('.journal-pos-active');
-    entries.forEach(entry => {
-      const text = entry.innerHTML;
-      if(text.includes(pos.dir) && text.includes(pos.entry.toFixed(2))){
-        // Check if we already have live P&L appended
-        if(!entry.querySelector('.journal-live-pnl')){
-          const liveDiv = document.createElement('div');
-          liveDiv.className = 'journal-live-pnl ' + (pnl>=0?'pos':'neg');
-          liveDiv.innerHTML = `📊 Live P&L: ${pnl>=0?'+':''}${pnl.toFixed(2)}% | ⏱ ${mins}м ${secs}с | Тек: ${price.toFixed(2)}`;
-          entry.appendChild(liveDiv);
-
-          const sltpDiv = document.createElement('div');
-          sltpDiv.className = 'journal-sltp';
-          sltpDiv.innerHTML = `SL: ${pos.sl.toFixed(2)} | TP: ${pos.tp.toFixed(2)} | До SL: ${pos.dir==='LONG'?((price-pos.sl)/price*100).toFixed(2):((pos.sl-price)/price*100).toFixed(2)}% | До TP: ${pos.dir==='LONG'?((pos.tp-price)/price*100).toFixed(2):((price-pos.tp)/price*100).toFixed(2)}%`;
-          entry.appendChild(sltpDiv);
-        } else {
-          const liveDiv = entry.querySelector('.journal-live-pnl');
-          liveDiv.className = 'journal-live-pnl ' + (pnl>=0?'pos':'neg');
-          liveDiv.innerHTML = `📊 Live P&L: ${pnl>=0?'+':''}${pnl.toFixed(2)}% | ⏱ ${mins}м ${secs}с | Тек: ${price.toFixed(2)}`;
-        }
-      }
-    });
-  });
-}
-
-function checkExit(price,candles){
-  if(!state.position)return; const pos=state.position; const atrv=atr(candles,14); const atrVal=atrv[atrv.length-1]||(price*0.001);
-  const lev=parseFloat($('leverage').value)||5;
-  const r=pos.dir==='LONG'?(price-pos.entry)/pos.entry*100*lev:(pos.entry-price)/pos.entry*100*lev;
-  const rRaw=pos.dir==='LONG'?(price-pos.entry)/pos.entry*100:(pos.entry-price)/pos.entry*100;
-  const slDist=Math.abs(pos.entry-pos.sl)/pos.entry*100; const rMultiple=slDist>0?Math.abs(rRaw)/slDist:0;
-  if(r>pos.maxProfit)pos.maxProfit=r;
-  if(pos.maxProfit>0.3&&r<pos.maxProfit-(0.35*atrVal/pos.entry*100*lev)){closePosition('Smart Exit (разворот)',price);return;}
-  if(!pos.layer1Done&&rMultiple>=0.5){pos.layer1Done=true; log(`Закрытие слоя 1 (30%) @ ${price.toFixed(2)} | +${r.toFixed(2)}%`,'tp');}
-  if(!pos.layer2Done&&rMultiple>=1.0){pos.layer2Done=true; if(pos.dir==='LONG')pos.sl=pos.entry+(pos.entry-pos.sl)*0.1; else pos.sl=pos.entry-(pos.sl-pos.entry)*0.1; log(`Закрытие слоя 2 (30%) + SL в безубыток @ ${price.toFixed(2)} | +${r.toFixed(2)}%`,'tp');}
-  if(pos.dir==='LONG'){ if(price<=pos.sl){closePosition('STOP LOSS',price);return;} if(price>=pos.tp){closePosition('TAKE PROFIT',price);return;} }
-  else { if(price>=pos.sl){closePosition('STOP LOSS',price);return;} if(price<=pos.tp){closePosition('TAKE PROFIT',price);return;} }
-  const trailStep=0.4*atrVal;
-  if(pos.dir==='LONG'&&price>pos.entry+trailStep){const newSl=price-trailStep; if(newSl>pos.sl)pos.sl=newSl;}
-  if(pos.dir==='SHORT'&&price<pos.entry-trailStep){const newSl=price+trailStep; if(newSl<pos.sl)pos.sl=newSl;}
-}
-
-function scan(){
-  if(!state.running)return; const now=Date.now(); if(now-state.lastScan<5000)return; state.lastScan=now;
-  const candles=state.candles[state.tf]; if(!candles||candles.length<30){log('Недостаточно данных...');return;}
-  const last=candles[candles.length-1]; const analysis=analyzeMarket(candles);
-  const mode=$('botMode').value; $('marketMode').textContent=analysis.mode; $('atrVal').textContent=analysis.atr?analysis.atr.toFixed(2):'--'; $('vwapVal').textContent=analysis.vwap?analysis.vwap.toFixed(2):'--'; $('spreadVal').textContent=analysis.spread?analysis.spread.toFixed(3)+'%':'--';
-  log(`Сканирование... Режим:${analysis.mode} | ADX:${analysis.adx.toFixed(1)} | Спред:${analysis.spread.toFixed(3)}%`);
-  if(state.position){checkExit(last.close,candles);}
-  updateUserPositions();
-  updateJournalLivePnl();
-  const useML=$('useML').checked;
-  const adxMin=useML?state.ml.params.adxMin:15; const spreadMax=useML?state.ml.params.spreadMax:0.15;
-  if(analysis.spread>spreadMax&&mode==='turbo'){log(`Сигнал заблокирован: спред ${analysis.spread.toFixed(3)}% > ${spreadMax.toFixed(2)}%`,'warn');return;}
-  if(analysis.adx<adxMin&&mode==='turbo'){log(`Сигнал заблокирован: ADX ${analysis.adx.toFixed(1)} < ${adxMin.toFixed(0)}`,'warn');return;}
-  const h=new Date().getUTCHours(); let sessionOk=true;
-  if(mode==='standard'&&(h<7||h>17))sessionOk=false; if(mode==='safe'&&(h<12||h>16))sessionOk=false;
-  if(!sessionOk){log('Вне торговой сессии','warn');return;}
-  const strategies=[];
-  if($('useMomentum').checked){const s=checkMomentum(candles,last.volume);if(s&&checkTimePatterns(s.strategy))strategies.push(s);}
-  if($('useVwap').checked){const s=checkVwap(candles,last.volume);if(s&&checkTimePatterns(s.strategy))strategies.push(s);}
-  if($('useBreak').checked){const s=checkBreak(candles,last.volume);if(s&&checkTimePatterns(s.strategy))strategies.push(s);}
-  if($('usePullback').checked){const s=checkPullback(candles,last.volume);if(s&&checkTimePatterns(s.strategy))strategies.push(s);}
-  if(strategies.length===0){log('Сигналов нет');return;}
-  let best=strategies[0]; let bestScore=-999;
-  if(useML&&state.ml.warmUpDone){ for(const s of strategies){ const sc=scoreStrategy(s.strategy,analysis)*state.ml.params.strategyWeights[s.strategy]; if(sc>bestScore){bestScore=sc;best=s;} } }
-  const atrVal=analysis.atr||(last.close*0.001); const slAtr=useML?state.ml.params.slMult:(parseFloat($('slAtr').value)||0.6); const tpAtr=useML?state.ml.params.tpMult:(parseFloat($('tpAtr').value)||1.8);
-  let sl,tp; if(best.dir==='LONG'){sl=last.close-atrVal*slAtr;tp=last.close+atrVal*tpAtr;}else{sl=last.close+atrVal*slAtr;tp=last.close-atrVal*tpAtr;}
-  const signal = {dir:best.dir, entry:last.close, sl, tp, strategy:best.strategy, reason:best.reason, analysis, time:Date.now(), candleIdx:candles.length-1, confirmed:false};
-  if($('copyTradingEnabled').checked){
-    addPendingSignal(signal);
-    log(`📡 СИГНАЛ ${best.dir} @ ${last.close.toFixed(2)} | ${best.strategy} | Ожидает подтверждения`, 'warn');
-  } else {
-    state.tradeMarkers.push({type:'entry',dir:best.dir,price:last.close,strategy:best.strategy,time:Date.now(),candleIdx:candles.length-1});
-    openPosition(best.dir,last.close,sl,tp,best.strategy,best.reason,analysis);
-  }
-}
-
-function connectWS(){
-  if(state.ws)return; const ws=new WebSocket(`${CONFIG.wsUrl}/${state.symbol.toLowerCase()}@kline_${state.tf}`);
-  ws.onopen=()=>{state.connected=true; $('wsBadge').textContent='WS ●'; $('wsBadge').style.background='#059669'; log('WebSocket подключен');};
-  ws.onmessage=(e)=>{
-    const msg=JSON.parse(e.data); if(msg.e==='kline'){
-      const k=msg.k; const candle={t:k.t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,quoteVolume:+k.q,closed:k.x};
-      const arr=state.candles[state.tf]=state.candles[state.tf]||[]; const last=arr[arr.length-1];
-      if(last&&last.t===candle.t)arr[arr.length-1]=candle; else if(!last||candle.t>last.t){arr.push(candle);if(arr.length>300)arr.shift();}
-      if(candle.closed){scan(); updateUserPositions(); updateJournalLivePnl();}
-      $('lastPrice').textContent=candle.close.toFixed(2); const change=((candle.close-arr[0].open)/arr[0].open*100); const chEl=$('priceChange'); chEl.textContent=(change>=0?'+':'')+change.toFixed(2)+'%'; chEl.className=change>=0?'up':'down';
-      drawChart();
-    }
-  };
-  ws.onerror=()=>{log('WS ошибка','warn');};
-  ws.onclose=()=>{state.connected=false; $('wsBadge').textContent='WS ○'; $('wsBadge').style.background='#dc2626'; log('WS отключен','warn'); state.ws=null; setTimeout(connectWS,5000);};
-  state.ws=ws;
-}
-function disconnectWS(){ if(state.ws){state.ws.close();state.ws=null;} }
-
-function resizeCanvas(){ const c=$('chart'); if(!c)return; const rect=c.parentElement.getBoundingClientRect(); c.width=rect.width*window.devicePixelRatio; c.height=rect.height*window.devicePixelRatio; drawChart(); }
-
-function drawChart(){
-  const c=$('chart'); if(!c)return; const ctx=c.getContext('2d'); const w=c.width,h=c.height; const dpr=window.devicePixelRatio;
-  const candles=state.candles[state.tf]; if(!candles||candles.length<2)return;
-  const z=state.zoom; const total=candles.length; const visibleCount=Math.max(20,Math.floor(total/z.scale)); const startIdx=Math.max(0,Math.min(total-visibleCount,Math.floor(z.offset*total))); const endIdx=Math.min(total,startIdx+visibleCount);
-  const visible=candles.slice(startIdx,endIdx); if(visible.length<2)return;
-  const padding={top:40,bottom:60,right:80,left:10}; const chartH=h-padding.top-padding.bottom; const chartW=w-padding.left-padding.right;
-  const maxP=Math.max(...visible.map(c=>c.high)), minP=Math.min(...visible.map(c=>c.low)); const rangeP=maxP-minP||1;
-  const candleW=Math.max(2,(chartW/visible.length)*0.7); const gap=chartW/visible.length;
-  const y=(price)=>padding.top+(1-(price-minP)/rangeP)*chartH; const x=(i)=>padding.left+i*gap+gap/2;
-  ctx.clearRect(0,0,w,h); ctx.fillStyle=CONFIG.colors.bg; ctx.fillRect(0,0,w,h);
-  ctx.strokeStyle=CONFIG.colors.grid; ctx.lineWidth=1;
-  for(let i=0;i<=5;i++){ const yy=padding.top+(chartH/5)*i; ctx.beginPath(); ctx.moveTo(padding.left,yy); ctx.lineTo(w-padding.right,yy); ctx.stroke(); const price=maxP-(rangeP/5)*i; ctx.fillStyle=CONFIG.colors.text; ctx.font=`${10*dpr}px sans-serif`; ctx.textAlign='right'; ctx.fillText(price.toFixed(2),w-5,yy+4); }
-  const ema9v=ema(candles,9), ema21v=ema(candles,21), vw=vwap(candles), bbv=bb(candles,20,2);
-  function drawLine(values,color,width=2){ ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); let started=false; for(let i=0;i<visible.length;i++){ const gi=startIdx+i; const v=values[gi]; if(v===null||v===undefined)continue; const px=x(i),py=y(v); if(!started){ctx.moveTo(px,py);started=true;}else ctx.lineTo(px,py); } ctx.stroke(); }
-  drawLine(ema9v,CONFIG.colors.ema9); drawLine(ema21v,CONFIG.colors.ema21); drawLine(vw,CONFIG.colors.vwap); drawLine(bbv.upper,CONFIG.colors.bb,1); drawLine(bbv.lower,CONFIG.colors.bb,1);
-  for(let i=0;i<visible.length;i++){ const cnd=visible[i]; const cx=x(i); const isUp=cnd.close>=cnd.open; ctx.fillStyle=isUp?CONFIG.colors.green:CONFIG.colors.red; ctx.strokeStyle=isUp?CONFIG.colors.green:CONFIG.colors.red; ctx.beginPath(); ctx.moveTo(cx,y(cnd.high)); ctx.lineTo(cx,y(cnd.low)); ctx.stroke(); const top=y(Math.max(cnd.open,cnd.close)); const bot=y(Math.min(cnd.open,cnd.close)); const bodyH=Math.max(1,bot-top); ctx.fillRect(cx-candleW/2,top,candleW,bodyH); }
-  const maxVol=Math.max(...visible.map(c=>c.volume)); const volH=40*dpr; const volY=h-padding.bottom+5;
-  for(let i=0;i<visible.length;i++){ const cnd=visible[i]; const cx=x(i); const vh=(cnd.volume/maxVol)*volH; ctx.fillStyle=cnd.close>=cnd.open?CONFIG.colors.volumeUp:CONFIG.colors.volumeDown; ctx.fillRect(cx-candleW/2,volY+volH-vh,candleW,vh); }
-  const markers=state.tradeMarkers.filter(m=>m.candleIdx>=startIdx&&m.candleIdx<endIdx);
-  for(const m of markers){ const mi=m.candleIdx-startIdx; const mx=x(mi); const my=y(m.price); if(m.type==='entry'){ ctx.fillStyle=m.dir==='LONG'?CONFIG.colors.green:CONFIG.colors.red; ctx.beginPath(); if(m.dir==='LONG'){ctx.moveTo(mx,my-12);ctx.lineTo(mx-6,my-4);ctx.lineTo(mx+6,my-4);}else{ctx.moveTo(mx,my+12);ctx.lineTo(mx-6,my+4);ctx.lineTo(mx+6,my+4);} ctx.fill(); ctx.fillStyle=CONFIG.colors.yellow; ctx.font=`${9*dpr}px sans-serif`; ctx.textAlign='center'; ctx.fillText(m.strategy,mx,m.dir==='LONG'?my-16:my+22); }else{ ctx.beginPath(); ctx.arc(mx,my,5,0,Math.PI*2); ctx.fillStyle=m.pnl>=0?CONFIG.colors.green:CONFIG.colors.red; ctx.fill(); ctx.fillStyle='#fff'; ctx.font=`${9*dpr}px sans-serif`; ctx.textAlign='center'; ctx.fillText((m.pnl>=0?'+':'')+m.pnl.toFixed(1)+'%',mx,my-10); } }
-  // Draw user position entry markers
-  state.copyTrading.userPositions.forEach(pos => {
-    const ci = state.candles[state.tf].length - 1;
-    if(ci >= startIdx && ci < endIdx){
-      const mx = x(ci - startIdx); const my = y(pos.entry);
-      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.setLineDash([3,3]);
-      ctx.beginPath(); ctx.moveTo(padding.left, my); ctx.lineTo(w - padding.right, my); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(mx, my, 4, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#f59e0b'; ctx.font = `bold ${9*dpr}px sans-serif`; ctx.textAlign = 'center';
-      ctx.fillText('YOU ' + pos.strategy, mx, my - 12);
-    }
-  });
-  if(state.position){ const pos=state.position; const lastIdx=candles.length-1; if(lastIdx>=startIdx&&lastIdx<endIdx){ const px=x(lastIdx-startIdx); ctx.strokeStyle=CONFIG.colors.orange; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(padding.left,y(pos.entry)); ctx.lineTo(w-padding.right,y(pos.entry)); ctx.stroke(); ctx.setLineDash([]); ctx.strokeStyle=CONFIG.colors.red; ctx.beginPath(); ctx.moveTo(padding.left,y(pos.sl)); ctx.lineTo(w-padding.right,y(pos.sl)); ctx.stroke(); ctx.strokeStyle=CONFIG.colors.green; ctx.beginPath(); ctx.moveTo(padding.left,y(pos.tp)); ctx.lineTo(w-padding.right,y(pos.tp)); ctx.stroke(); const lev=parseFloat($('leverage').value)||5; const curPnl=pos.dir==='LONG'?(candles[lastIdx].close-pos.entry)/pos.entry*100*lev:(pos.entry-candles[lastIdx].close)/pos.entry*100*lev; ctx.fillStyle=curPnl>=0?CONFIG.colors.green:CONFIG.colors.red; ctx.font=`bold ${11*dpr}px sans-serif`; ctx.textAlign='left'; ctx.fillText(`P&L: ${curPnl>=0?'+':''}${curPnl.toFixed(2)}%`,padding.left+5,y(candles[lastIdx].close)-10); } }
-}
-
-function initZoom(){
-  const c=$('chart'); if(!c)return;
-  c.addEventListener('wheel',e=>{e.preventDefault(); const delta=e.deltaY>0?1.15:0.87; state.zoom.scale=Math.max(1,Math.min(20,state.zoom.scale*delta)); drawChart();},{passive:false});
-  c.addEventListener('mousedown',e=>{state.zoom.dragging=true;state.zoom.dragStartX=e.clientX;state.zoom.dragStartOffset=state.zoom.offset;c.style.cursor='grabbing';});
-  window.addEventListener('mousemove',e=>{ if(!state.zoom.dragging)return; const rect=c.getBoundingClientRect(); const dx=(e.clientX-state.zoom.dragStartX)/rect.width; state.zoom.offset=Math.max(0,Math.min(1,state.zoom.dragStartOffset-dx)); drawChart(); });
-  window.addEventListener('mouseup',()=>{ state.zoom.dragging=false; c.style.cursor='crosshair'; });
-}
-function resetZoom(){ state.zoom.scale=1; state.zoom.offset=0; drawChart(); }
-
-
-/* ========== COPY TRADING FUNCTIONS ========== */
-function addPendingSignal(signal){
-  const ct = state.copyTrading;
-  ct.pendingSignals.push(signal);
-  if(ct.pendingSignals.length > ct.maxSignals) ct.pendingSignals.shift();
-  if($('copyAutoConfirm').checked){
-    setTimeout(()=>confirmSignal(ct.pendingSignals.length-1), 300);
-  }
-  renderPendingSignals();
-  playSound('warn');
-}
-
-function renderPendingSignals(){
-  const panel = $('pendingSignals'); if(!panel)return;
-  const ct = state.copyTrading;
-  if(ct.pendingSignals.length === 0){ panel.innerHTML = '<div class="empty-state">Нет активных сигналов</div>'; $('pendingCount').style.display='none'; return; }
-  $('pendingCount').style.display='inline'; $('pendingCount').textContent = ct.pendingSignals.length;
-  panel.innerHTML = '';
-  ct.pendingSignals.forEach((sig, idx) => {
-    const div = document.createElement('div'); div.className = 'signal-card new';
-    const dirColor = sig.dir === 'LONG' ? 'long' : 'short';
-    div.innerHTML = `
-      <div class="sig-header"><span class="sig-dir ${dirColor}">▲ ${sig.dir}</span><span class="sig-strat">${sig.strategy}</span></div>
-      <div class="sig-prices"><span>Вход:</span> ${sig.entry.toFixed(2)} | <span>SL:</span> ${sig.sl.toFixed(2)} | <span>TP:</span> ${sig.tp.toFixed(2)}</div>
-      <div class="sig-reason">${sig.reason}</div>
-      <div class="sig-actions">
-        <button class="sig-confirm" onclick="confirmSignal(${idx})">✅ Копировать</button>
-        <button class="sig-skip" onclick="skipSignal(${idx})">❌ Пропустить</button>
-      </div>`;
-    panel.appendChild(div);
-    setTimeout(()=>div.classList.remove('new'), 1000);
-  });
-}
-
-function confirmSignal(idx){
-  const ct = state.copyTrading;
-  if(idx < 0 || idx >= ct.pendingSignals.length) return;
-  const sig = ct.pendingSignals[idx];
-  sig.confirmed = true; sig.confirmTime = Date.now();
-  ct.userPositions.push({
-    dir: sig.dir, entry: sig.entry, sl: sig.sl, tp: sig.tp,
-    strategy: sig.strategy, reason: sig.reason, analysis: sig.analysis,
-    entryTime: Date.now(), maxProfit: 0, layer1Done: false, layer2Done: false
-  });
-  ct.signalHistory.push({...sig, action:'confirmed', confirmTime: Date.now()});
-  ct.pendingSignals.splice(idx, 1);
-  log(`✅ Пользователь скопировал ${sig.dir} @ ${sig.entry.toFixed(2)} | ${sig.strategy}`, 'entry');
-  playSound('entry');
-  renderPendingSignals();
-  renderUserPositions();
-  saveState();
-}
-
-function skipSignal(idx){
-  const ct = state.copyTrading;
-  if(idx < 0 || idx >= ct.pendingSignals.length) return;
-  const sig = ct.pendingSignals[idx];
-  ct.signalHistory.push({...sig, action:'skipped', skipTime: Date.now()});
-  ct.pendingSignals.splice(idx, 1);
-  log(`❌ Пользователь пропустил ${sig.dir} @ ${sig.entry.toFixed(2)} | ${sig.strategy}`, 'warn');
-  renderPendingSignals();
-  saveState();
-}
-
-function renderUserPositions(){
-  const panel = $('userPositionsPanel'); if(!panel)return;
-  const ct = state.copyTrading;
-  const candles = state.candles[state.tf];
-  const price = candles && candles.length ? candles[candles.length-1].close : null;
-
-  if(ct.userPositions.length === 0){ 
-    panel.innerHTML = '<div class="empty-state">Нет открытых позиций</div>'; 
-    $('activeUserPositions').textContent = ''; return; 
-  }
-  $('activeUserPositions').textContent = `(${ct.userPositions.length} активных)`;
-  panel.innerHTML = '';
-
-  ct.userPositions.forEach((pos, idx) => {
-    const div = document.createElement('div'); div.className = 'user-pos-card ' + (pos.dir==='LONG'?'long':'short');
-    const lev = parseFloat($('leverage').value)||5;
-    let pnl = 0, pnlRaw = 0;
-    if(price){
-      pnlRaw = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100 : (pos.entry-price)/pos.entry*100;
-      pnl = pnlRaw * lev;
-    }
-    const elapsed = Math.floor((Date.now() - pos.entryTime)/1000);
-    const mins = Math.floor(elapsed/60), secs = elapsed%60;
-
-    // SLTP track
-    const slDist = Math.abs(pos.entry - pos.sl);
-    const tpDist = Math.abs(pos.tp - pos.entry);
-    const totalRange = slDist + tpDist;
-    let progress = 50;
-    if(totalRange > 0 && price){
-      const curDist = pos.dir==='LONG' ? (price - pos.sl) : (pos.sl - price);
-      progress = Math.max(0, Math.min(100, (curDist / totalRange) * 100));
-    }
-
-    div.innerHTML = `
-      <div class="pos-header">
-        <span class="pos-name">${pos.dir} | ${pos.strategy}</span>
-        <span class="pos-pnl ${pnl>=0?'pos':'neg'}">${pnl>=0?'+':''}${pnl.toFixed(2)}%</span>
-      </div>
-      <div class="pos-details">
-        <b>Вход:</b> ${pos.entry.toFixed(2)} | <b>Тек:</b> ${price ? price.toFixed(2) : '--'} | <b>SL:</b> ${pos.sl.toFixed(2)} | <b>TP:</b> ${pos.tp.toFixed(2)}
-      </div>
-      <div class="sltp-track">
-        <div class="sltp-fill" style="width:${progress}%"></div>
-        <div class="sltp-marker sl" title="SL: ${pos.sl.toFixed(2)}"></div>
-        <div class="sltp-marker tp" title="TP: ${pos.tp.toFixed(2)}"></div>
-        <div class="sltp-marker entry" title="Entry: ${pos.entry.toFixed(2)}" style="left:${progress}%"></div>
-      </div>
-      <div class="pos-timer">⏱ ${mins}м ${secs}с в сделке | <button onclick="closeUserPosition(${idx})" style="background:#dc2626;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:10px;cursor:pointer">Закрыть</button></div>`;
-    panel.appendChild(div);
-  });
-}
-
-function closeUserPosition(idx){
-  const ct = state.copyTrading;
-  if(idx < 0 || idx >= ct.userPositions.length) return;
-  const pos = ct.userPositions[idx];
-  const candles = state.candles[state.tf];
-  const price = candles && candles.length ? candles[candles.length-1].close : pos.entry;
-  const lev = parseFloat($('leverage').value)||5;
-  const pnl = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100*lev : (pos.entry-price)/pos.entry*100*lev;
-  const isWin = pnl > 0;
-
-  // Add to journal
-  addJournalEntry('EXIT', {dir:pos.dir, entry:pos.entry, exit:price, pnl, strategy:pos.strategy, reason:'Ручное закрытие', time:new Date().toLocaleTimeString('ru-RU')});
-
-  ct.signalHistory.push({...pos, action:'closed', exit:price, pnl, closeTime: Date.now()});
-  ct.userPositions.splice(idx, 1);
-  log(`💼 Пользователь закрыл ${pos.dir} @ ${price.toFixed(2)} | P&L ${pnl>=0?'+':''}${pnl.toFixed(2)}%`, isWin?'tp':'sl');
-  playSound(isWin?'exit':'sl');
-  renderUserPositions();
-  updateUI();
-  saveState();
-}
-
-function updateUserPositions(){
-  const ct = state.copyTrading;
-  const candles = state.candles[state.tf];
-  if(!candles || candles.length === 0 || ct.userPositions.length === 0) return;
-  const price = candles[candles.length-1].close;
-  const lev = parseFloat($('leverage').value)||5;
-
-  ct.userPositions.forEach(pos => {
-    const pnlRaw = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100 : (pos.entry-price)/pos.entry*100;
-    const pnl = pnlRaw * lev;
-    if(pnl > pos.maxProfit) pos.maxProfit = pnl;
-
-    // Check SL
-    if(pos.dir==='LONG' && price <= pos.sl){ closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'STOP LOSS'); return; }
-    if(pos.dir==='SHORT' && price >= pos.sl){ closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'STOP LOSS'); return; }
-    // Check TP
-    if(pos.dir==='LONG' && price >= pos.tp){ closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'TAKE PROFIT'); return; }
-    if(pos.dir==='SHORT' && price <= pos.tp){ closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'TAKE PROFIT'); return; }
-
-    // Smart exit on reversal
-    const atrv = atr(candles, 14);
-    const atrVal = atrv[atrv.length-1] || (price*0.001);
-    if(pos.maxProfit > 0.3 && pnl < pos.maxProfit - (0.35*atrVal/pos.entry*100*lev)){
-      closeUserPositionBySLTP(ct.userPositions.indexOf(pos), price, 'Smart Exit');
-      return;
-    }
-  });
-  renderUserPositions();
-}
-
-function closeUserPositionBySLTP(idx, price, reason){
-  const ct = state.copyTrading;
-  if(idx < 0 || idx >= ct.userPositions.length) return;
-  const pos = ct.userPositions[idx];
-  const lev = parseFloat($('leverage').value)||5;
-  const pnl = pos.dir==='LONG' ? (price-pos.entry)/pos.entry*100*lev : (pos.entry-price)/pos.entry*100*lev;
-  const isWin = pnl > 0;
-
-  addJournalEntry('EXIT', {dir:pos.dir, entry:pos.entry, exit:price, pnl, strategy:pos.strategy, reason, time:new Date().toLocaleTimeString('ru-RU')});
-  ct.signalHistory.push({...pos, action:'closed', exit:price, pnl, reason, closeTime: Date.now()});
-  ct.userPositions.splice(idx, 1);
-  log(`💼 ${reason} | ${pos.dir} @ ${price.toFixed(2)} | P&L ${pnl>=0?'+':''}${pnl.toFixed(2)}%`, isWin?'tp':'sl');
-  playSound(isWin?'exit':'sl');
-  renderUserPositions();
-  updateUI();
-  saveState();
-}
-
-/* ========== END COPY TRADING ========== */
-
-function updateUI(){
-  const s=state.stats; const total=s.total; const wins=s.wins; const losses=s.losses; const wr=total>0?(wins/total*100).toFixed(1):'0.0';
-  $('totalTrades').textContent=total; $('winTrades').textContent=wins; $('lossTrades').textContent=losses; $('winRate').textContent=wr+'%';
-  const pnlEl=$('sessionPnl'); pnlEl.textContent=(s.pnl>=0?'+':'')+s.pnl.toFixed(2)+'%'; pnlEl.className='pnl-live '+(s.pnl>=0?'pos':'neg');
-  const sb=$('streakBox'); sb.innerHTML=''; s.streak.slice(-12).forEach(r=>{ const d=document.createElement('div'); d.className='streak-dot '+(r==='W'?'win':'loss'); sb.appendChild(d); });
-  const stContainer=$('strategyStats'); stContainer.innerHTML='';
-  for(const [name,st] of Object.entries(state.strategyStats)){
-    const stWr=st.trades>0?(st.wins/st.trades*100).toFixed(1):'0.0';
-    const card=document.createElement('div'); card.className='strategy-card'+(st.trades>0?' active':'');
-    card.innerHTML=`<div class="name">${name}</div><div class="stats"><span>Сделок: ${st.trades}</span><span class="pos">W: ${st.wins}</span><span class="neg">L: ${st.losses}</span><span>WR: ${stWr}%</span><span class="${st.pnl>=0?'pos':'neg'}">P&L: ${st.pnl>=0?'+':''}${st.pnl.toFixed(2)}%</span></div>`;
-    stContainer.appendChild(card);
-  }
-  $('sessionBadge').textContent=state.running?(state.mode==='turbo'?'🔥 TURBO АКТИВЕН':'⚖️ БОТ АКТИВЕН'):'СЕССИЯ: ОЖИДАНИЕ';
-  $('sessionBadge').style.background=state.running?'#059669':'#7c3aed';
-  renderCalendar(); updateMLPanel(); renderUserPositions();
-}
-
-function changeMonth(delta){
-  state.calendarMonth+=delta;
-  if(state.calendarMonth>11){state.calendarMonth=0;state.calendarYear++;}
-  if(state.calendarMonth<0){state.calendarMonth=11;state.calendarYear--;}
-  renderCalendar();
-}
-function renderCalendar(){
-  const grid=$('calendarGrid'); const title=$('calendarTitle'); if(!grid)return;
-  grid.innerHTML='';
-  const year=state.calendarYear; const month=state.calendarMonth;
-  const monthNames=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-  if(title)title.textContent=`${monthNames[month]} ${year}`;
-  const firstDay=new Date(year,month,1); const lastDay=new Date(year,month+1,0); const startOffset=(firstDay.getDay()+6)%7;
-  for(let i=0;i<startOffset;i++){ const empty=document.createElement('div'); grid.appendChild(empty); }
-  let monthTrades=0,monthWins=0,monthLosses=0,monthPnl=0,plusDays=0;
-  for(let d=1; d<=lastDay.getDate(); d++){
-    const date=new Date(year,month,d); const key=date.toISOString().slice(0,10);
-    const dayData=state.dailyStats[key]||{trades:0,pnl:0};
-    if(dayData.trades>0){ monthTrades+=dayData.trades; monthWins+=dayData.wins||0; monthLosses+=dayData.losses||0; monthPnl+=dayData.pnl; if(dayData.pnl>0)plusDays++; }
-    const cell=document.createElement('div'); cell.className='calendar-day'+(dayData.pnl>0?' pos':(dayData.pnl<0?' neg':' neutral'));
-    cell.innerHTML=`<div class="date">${d}</div><div class="pnl ${dayData.pnl>=0?'pos':'neg'}">${dayData.pnl?dayData.pnl.toFixed(1)+'%':'—'}</div><div class="count">${dayData.trades>0?dayData.trades+' сд':'—'}</div>`;
-    cell.onclick=()=>showDayDetail(key,dayData,d,monthNames[month]);
-    grid.appendChild(cell);
-  }
-  const wr=monthTrades>0?(monthWins/monthTrades*100).toFixed(1):'0.0';
-  const pnlEl=$('monthPnl'),tradesEl=$('monthTrades'),wrEl=$('monthWR'),plusEl=$('monthPlusDays');
-  if(pnlEl){ pnlEl.textContent=(monthPnl>=0?'+':'')+monthPnl.toFixed(2)+'%'; pnlEl.className='sum-val '+(monthPnl>=0?'pos':'neg'); }
-  if(tradesEl)tradesEl.textContent=monthTrades; if(wrEl)wrEl.textContent=wr+'%'; if(plusEl)plusEl.textContent=plusDays;
-}
-function showDayDetail(key,dayData,dayNum,monthName){
-  const detail=$('dayDetail'); const title=$('dayDetailTitle'); const content=$('dayDetailContent');
-  if(!detail||!title||!content)return;
-  detail.className='day-detail show';
-  title.textContent=`${dayNum} ${monthName} — ${dayData.trades||0} сделок, P&L ${(dayData.pnl||0).toFixed(2)}%`;
-  if(!dayData.history||dayData.history.length===0){ content.innerHTML='<div style="color:#64748b">Нет сделок</div>'; return; }
-  let html='';
-  dayData.history.forEach((h,i)=>{ const pnlClass=h.pnl>=0?'pos':'neg'; html+=`<div style="border-bottom:1px solid #334155;padding:4px 0"><span style="color:#94a3b8">#${i+1}</span> <b>${h.dir}</b> @ ${h.entry.toFixed(2)} → ${h.exit.toFixed(2)} <span class="${pnlClass}">${h.pnl>=0?'+':''}${h.pnl.toFixed(2)}%</span> <span style="color:#64748b;font-size:10px">${h.strategy}</span></div>`; });
-  content.innerHTML=html;
-}
-
-async function startBot(){
-  if(state.running)return;
-  state.symbol=$('symbol').value; state.mode=$('botMode').value; state.running=true; state.stats.sessionStart=Date.now();
-  $('startBtn').style.display='none'; $('stopBtn').style.display='block'; $('stopBtn').disabled=false;
-  $('dataBadge').textContent='РЕАЛЬНЫЕ ДАННЫЕ'; $('dataBadge').className='badge badge-live';
-  log('🚀 БОТ ЗАПУЩЕН | '+state.symbol+' | '+state.mode.toUpperCase());
-  const tf=state.tf;
-  const data=await fetchKlines(state.symbol,CONFIG.intervals[tf],CONFIG.limit);
-  if(data){ state.candles[tf]=data; connectWS(); drawChart(); scan(); }
-  else { log('Данные недоступны, демо-режим','warn'); $('dataBadge').textContent='ДЕМО'; $('dataBadge').className='badge badge-demo'; generateDemoData(); }
-}
-function stopBot(){
-  state.running=false; disconnectWS();
-  $('startBtn').style.display='block'; $('stopBtn').style.display='none';
-  $('dataBadge').textContent='ОСТАНОВЛЕН'; $('dataBadge').className='badge'; $('dataBadge').style.background='#475569';
-  log('⏹ БОТ ОСТАНОВЛЕН');
-  if(state.position){ const price=state.candles[state.tf]?state.candles[state.tf][state.candles[state.tf].length-1].close:state.position.entry; closePosition('Ручная остановка',price); }
-  updateUI();
-}
-function setTF(tf){
-  state.tf=tf;
-  ['1m','5m','15m','1h'].forEach(t=>{ const btn=$('tf'+t); if(btn)btn.className=(t===tf?'active':''); });
-  if(state.running){ disconnectWS(); fetchKlines(state.symbol,CONFIG.intervals[tf],CONFIG.limit).then(data=>{ if(data){ state.candles[tf]=data; connectWS(); drawChart(); } }); }
-}
-function generateDemoData(){
-  const tf=state.tf; const arr=[];
-  let price=state.symbol.includes('PAXG')?2600:(state.symbol.includes('BTC')?65000:3500);
-  const now=Date.now();
-  for(let i=0;i<150;i++){
-    const t=now-(150-i)*getIntervalMs(tf); const change=(Math.random()-0.48)*price*0.008;
-    const open=price; price+=change; const high=Math.max(open,price)+Math.random()*price*0.003; const low=Math.min(open,price)-Math.random()*price*0.003;
-    arr.push({t,open,high,low,close:price,volume:Math.random()*100+50,quoteVolume:Math.random()*50000});
-  }
-  state.candles[tf]=arr; drawChart();
-}
-function getIntervalMs(tf){ const map={'1m':60000,'5m':300000,'15m':900000,'1h':3600000}; return map[tf]||300000; }
-
-document.addEventListener('DOMContentLoaded',()=>{
-  loadState(); resizeCanvas(); initZoom(); updateUI();
-  // Restore copy trading settings
-  if(state.copyTrading.enabled) $('copyTradingEnabled').checked = true;
-  if(state.copyTrading.autoConfirm) $('copyAutoConfirm').checked = true;
-  window.addEventListener('resize',resizeCanvas);
-  setInterval(()=>{ const now=new Date(); $('clock').textContent=now.toLocaleTimeString('ru-RU',{hour12:false})+' UTC'; },1000);
-  // Live update interval for user positions and journal
-  setInterval(()=>{ if(state.running || state.copyTrading.userPositions.length>0){ updateUserPositions(); updateJournalLivePnl(); } }, 2000);
-  // Copy trading checkbox listeners
-  $('copyTradingEnabled').addEventListener('change', (e)=>{ state.copyTrading.enabled = e.target.checked; saveState(); log(e.target.checked ? '🔄 Copy Trading ВКЛЮЧЕН' : '🔄 Copy Trading ВЫКЛЮЧЕН'); });
-  $('copyAutoConfirm').addEventListener('change', (e)=>{ state.copyTrading.autoConfirm = e.target.checked; saveState(); log(e.target.checked ? '✅ Авто-подтверждение ВКЛЮЧЕНО' : '⏸ Авто-подтверждение ВЫКЛЮЧЕНО'); });
-  fetchKlines('PAXGUSDT','5m',100).then(data=>{ if(data){ state.candles['5m']=data; $('dataBadge').textContent='РЕАЛЬНЫЕ ДАННЫЕ'; $('dataBadge').className='badge badge-live'; drawChart(); } });
-});
-</script>
+    <script src="js/storage.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/models.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/code-runner.js"></script>
+    <script src="js/tools.js"></script>
+    <script src="js/rag.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
+
